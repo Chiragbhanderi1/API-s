@@ -43,7 +43,7 @@ app.get('/getcourses',async(req,res)=>{
                 const course = new Course(
                     doc.id,
                     doc.data().course,
-                    doc.data().price,
+                    doc.data().price, 
                     doc.data().details,
                     doc.data().benifits
                 );
