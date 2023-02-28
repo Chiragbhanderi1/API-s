@@ -43,10 +43,10 @@ app.get('/getcourses',async(req,res)=>{
             data.forEach(doc => {
                 const course = new Course(
                     doc.id,
-                    doc.data().course,
-                    doc.data().price, 
+                    doc.data().title,
+                    doc.data().subtitle, 
                     doc.data().details,
-                    doc.data().benifits
+                    doc.data().perks
                 );
                 coursesArray.push(course);
             });
