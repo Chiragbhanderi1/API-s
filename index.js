@@ -1,6 +1,7 @@
 const express = require('express');
 const app  = express();
 const Course = require('./modals/course');
+const Interships = require('./modals/intership');
 const admin = require('firebase-admin');
 // require('dotenv').config();
 const credentials = require("./key.json");
@@ -25,13 +26,21 @@ app.use(express.urlencoded({extended:true}))
 app.post('/courses',async(req,res)=>{
     try{
       const data = req.body;
-      const response = await db.collection("courses").doc().set(data)
+      const response = await db.collection("courses").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
         res.send(err)
     }
 })
-
+app.post('/interships',async(req,res)=>{
+    try{
+      const data = req.body;
+      const response = await db.collection("interships").doc(req.body.title).set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getcourses',async(req,res)=>{
     try{
         const courses =  db.collection("courses");
@@ -44,9 +53,10 @@ app.get('/getcourses',async(req,res)=>{
                 const course = new Course(
                     doc.id,
                     doc.data().title,
-                    doc.data().subtitle, 
+                    doc.data().subtitle,
+                    doc.data().price, 
                     doc.data().details,
-                    doc.data().perks
+                    doc.data().benifits
                 );
                 coursesArray.push(course);
             });
@@ -56,7 +66,30 @@ app.get('/getcourses',async(req,res)=>{
         res.send(err)
     }
 })
-
+app.get('/getinterships',async(req,res)=>{
+    try{
+        const interships =  db.collection("interships");
+        const data = await interships.get();
+        const intershipsArray = [];
+        if(data.empty) {
+            res.status(404).send('No student record found');
+        }else {
+            data.forEach(doc => {
+                const intership = new Interships(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle, 
+                    doc.data().details,
+                    doc.data().perks
+                );
+                intershipsArray.push(intership);
+            });
+            res.send(intershipsArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getcourse/:id',async(req,res)=>{
     try{
         const courseById =  db.collection("courses").doc(req.params.id);
@@ -70,7 +103,20 @@ app.get('/getcourse/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.put('/update/:id',async(req,res)=>{
+app.get('/getintership/:id',async(req,res)=>{
+  try{
+      const intershipById =  db.collection("interships").doc(req.params.id);
+      const data = await intershipById.get();
+      if(!data.exists) {
+          res.status(404).send('No course record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
+app.put('/updatecourse/:id',async(req,res)=>{
     try{
         const data = req.body; 
         const course =  db.collection("courses").doc(req.params.id);
@@ -80,7 +126,17 @@ app.put('/update/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.delete('/delete/:id',async(req,res)=>{
+app.put('/updateintership/:id',async(req,res)=>{
+    try{
+        const data = req.body; 
+        const intership =  db.collection("interships").doc(req.params.id);
+        await intership.update(data);
+        res.send('course record updated successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
+app.delete('/deletecourse/:id',async(req,res)=>{
     try{;
         db.collection("courses").doc(req.params.id).delete();
         res.send('course record deleted successfuly');
@@ -88,8 +144,14 @@ app.delete('/delete/:id',async(req,res)=>{
         res.send(err)
     }
 })
-
-
+app.delete('/deleteintership/:id',async(req,res)=>{
+    try{;
+        db.collection("interships").doc(req.params.id).delete();
+        res.send('course record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
 app.post('/file', upload.single('file'), async (req, res) => {
     try {
       const file = req.file;
@@ -97,7 +159,7 @@ app.post('/file', upload.single('file'), async (req, res) => {
         return res.status(400).send('No file uploaded');
       }
   
-      const filename = `${file.originalname}`;
+      const filename = `intership/${file.originalname}`;
       const fileRef = bucket.file(filename);
       const options = {
         metadata: {
@@ -111,14 +173,13 @@ app.post('/file', upload.single('file'), async (req, res) => {
     //     expires: '03-17-2025', // Replace with your desired expiration date
     //   });
    
-      return res.send("photo saved");
+      return res.send("File uploaded");
     } catch (err) {
       console.error(err);
       return res.status(500).send('Server error');
     } 
   }); 
-
-  app.get('/file/:filename', (req, res) => { // Assuming images are stored in a directory called 'images'
+app.get('/file/:filename', (req, res) => { 
     const filename = req.params.filename;
     const file = bucket.file(filename);
   
@@ -133,7 +194,6 @@ app.post('/file', upload.single('file'), async (req, res) => {
       res.status(500).send('Server error');
     }
   });
-
 const PORT = process.env.PORT || 8000;
 app.listen(PORT , ()=>{
     console.log(`Server is running on port ${PORT}`) 

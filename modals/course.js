@@ -1,7 +1,8 @@
 class Course {
-    constructor(id, course, price, details,benifits,img ) {
+    constructor(id, title, subtitle,price, details,benifits,img ) {
             this.id = id;
-            this.course = course;
+            this.title = title;
+            this.subtitle = subtitle;
             this.price = price;
             this.details = details;
             this.benifits = benifits;
