@@ -114,6 +114,7 @@ app.get('/getinterships',async(req,res)=>{
                     doc.data().subtitle, 
                     doc.data().details,
                     doc.data().perks,
+                    doc.data().price,
                     doc.data().img
                 );
                 intershipsArray.push(intership);
@@ -214,7 +215,7 @@ app.put('/updateintership/:id',async(req,res)=>{
 app.put('/updateevent/:id',async(req,res)=>{
     try{
         const data = req.body; 
-        const event =  db.collection("interships").doc(req.params.id);
+        const event =  db.collection("events").doc(req.params.id);
         await event.update(data);
         res.send('course record updated successfuly');
     }catch(err){
