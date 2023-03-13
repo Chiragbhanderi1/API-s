@@ -3,6 +3,7 @@ const app  = express();
 const Course = require('./modals/course');
 const Interships = require('./modals/intership');
 const Event = require('./modals/event');
+const User = require('./modals/user');
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
@@ -67,6 +68,15 @@ app.post('/events',async(req,res)=>{
     try{
       const data = req.body;
       const response = await db.collection("events").doc(req.body.title).set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
+app.post('/users',async(req,res)=>{
+    try{
+      const data = req.body;
+      const response = await db.collection("users").doc(req.body.email).set(data)
         res.send(response)
     }catch(err){
         res.send(err)
@@ -146,8 +156,34 @@ app.get('/getevents',async(req,res)=>{
                 );
                 eventArray.push(event);
             });
-            // console.log(doc.data().past);
             res.send(eventArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
+app.get('/getusers',async(req,res)=>{
+    try{
+        const users =  db.collection("users");
+        const data = await users.get();
+        const userArray = [];
+        if(data.empty) {
+            res.status(404).send('No Event record found');
+        }else {
+            data.forEach(doc => {
+                const user = new User(
+                    doc.id,
+                    doc.data().past,
+                    doc.data().title,
+                    doc.data().subtitle, 
+                    doc.data().price,
+                    doc.data().date,
+                    doc.data().details,
+                    doc.data().img
+                );
+                userArray.push(user);
+            });
+            res.send(userArray);
         }
     }catch(err){
         res.send(err)
@@ -249,13 +285,45 @@ app.delete('/deleteevent/:id',async(req,res)=>{
 app.post('/subscribedcourses/:courseId', authenticate,async (req, res) => {
     const userId = req.userId;
     const courseId = req.params.courseId; 
-    try {
-      // Add the course ID to the user's subscribed courses array
-      await db.collection('subscribecourse').doc(userId).update({
-        subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
+    const data = req.body;  
+    const coursesRef =  db.collection("subscribecourse")
+    try { 
+      coursesRef.doc(userId).get()
+      .then(doc => {
+        if (doc.exists) {
+          console.log(1);
+          // Update the existing course
+          coursesRef.doc(userId).update(data)
+          .then(() => {
+            console.log('Course updated successfully');
+            db.collection('subscribecourse').doc(userId).update({
+              subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
+            });
+            res.status(200).send('User subscribed to course successfully');
+          })
+          .catch(err => {
+            console.error(err);
+          });
+        } else {
+          // Add the new course to Firebase
+          coursesRef.doc(userId).set(data)
+            .then(() => {
+              console.log('New course added successfully');
+              // Add the course ID to the user's subscribed courses array
+              db.collection('subscribecourse').doc(userId).update({
+                subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
+              });
+              res.status(200).send('User subscribed to course successfully');
+            })
+            .catch(err => {
+              console.error(err);
+            });
+        }
+      })
+      .catch(err => {
+        console.error(err);
       });
-  
-      res.status(200).send('User subscribed to course successfully');
+
     } catch (error) {
       console.error(error);
       res.status(500).send(error);
@@ -264,13 +332,47 @@ app.post('/subscribedcourses/:courseId', authenticate,async (req, res) => {
 app.post('/subscribedintership/:internshipId', authenticate,async (req, res) => {
     const userId = req.userId;
     const intershipId = req.params.internshipId; 
+    const data = req.body;
+    const intershipRef = db.collection("subscribeintership")
     try {
-      // Add the course ID to the user's subscribed courses array
-      await db.collection('subscribeintership').doc(userId).update({
-        subscribedCourses: admin.firestore.FieldValue.arrayUnion(intershipId)
+      intershipRef.doc(userId).get()
+      .then(doc => {
+        if (doc.exists) {
+          console.log(1);
+          // Update the existing course
+          intershipRef.doc(userId).update(data)
+          .then(() => {
+            console.log('Course updated successfully');
+            // Add the course ID to the user's subscribed courses array
+            db.collection('subscribeintership').doc(userId).update({
+              subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId)
+              });
+              res.status(200).send('User subscribed to internship successfully');
+          })
+          .catch(err => {
+            console.error(err);
+          });
+        } else {
+          // Add the new course to Firebase
+          intershipRef.doc(userId).set(data)
+            .then(() => {
+              console.log('New course added successfully');
+              // Add the course ID to the user's subscribed courses array
+              db.collection('subscribeintership').doc(userId).update({
+              subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId)
+              });
+              res.status(200).send('User subscribed to internship successfully');
+            })
+            .catch(err => {
+              console.error(err);
+            });
+        }
+      })
+      .catch(err => {
+        console.error(err);
       });
-  
-      res.status(200).send('User subscribed to internship successfully');
+      // Add the course ID to the user's subscribed courses array
+
     } catch (error) {
       console.error(error);
       res.status(500).send(error);
@@ -312,12 +414,12 @@ app.post('/file', upload.single('file'), async (req, res) => {
       };
       await fileRef.save(file.buffer, options);
   
-    //   const downloadUrl = await fileRef.getSignedUrl({
-    //     action: 'read',
-    //     expires: '03-17-2025', // Replace with your desired expiration date
-    //   });
+      const downloadUrl = await fileRef.getSignedUrl({
+        action: 'read',
+        expires: '03-17-2035', // Replace with your desired expiration date
+      });
    
-      return res.send("File uploaded");
+      return res.send({success:"File uploaded",downloadUrl});
     } catch (err) {
       console.error(err);
       return res.status(500).send('Server error');
