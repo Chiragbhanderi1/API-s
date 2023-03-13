@@ -166,7 +166,7 @@ app.get('/getusers',async(req,res)=>{
     try{
         const users =  db.collection("users");
         const data = await users.get();
-        const userArray = [];
+        const userArray = []; 
         if(data.empty) {
             res.status(404).send('No Event record found');
         }else {
