@@ -173,13 +173,12 @@ app.get('/getusers',async(req,res)=>{
             data.forEach(doc => {
                 const user = new User(
                     doc.id,
-                    doc.data().past,
-                    doc.data().title,
-                    doc.data().subtitle, 
-                    doc.data().price,
-                    doc.data().date,
-                    doc.data().details,
-                    doc.data().img
+                    doc.data().email,
+                    doc.data().name,
+                    doc.data().college, 
+                    doc.data().contact,
+                    doc.data().address,
+                    doc.data().year
                 );
                 userArray.push(user);
             });
