@@ -7,7 +7,8 @@ const User = require('./modals/user');
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
-
+const cors = require('cors')
+app.use(cors());
 admin.initializeApp({
     credential:admin.credential.cert(credentials),
     storageBucket: 'gs://internship-project-57ed0.appspot.com',
