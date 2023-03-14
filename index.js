@@ -377,9 +377,9 @@ app.post('/subscribedintership/:internshipId', authenticate,async (req, res) => 
       res.status(500).send(error);
     }
   });
-  app.get('/getsubscribedcourses', authenticate,async (req, res) => {
+  app.get('/getsubscribedcourses/:userId',async (req, res) => {
     try {
-      const userDoc = await db.collection('subscribecourse').doc(req.userId).get();
+      const userDoc = await db.collection('subscribecourse').doc(req.params.userId).get();
       const subscribecourse = userDoc.data();
       res.status(200).send(subscribecourse);
     } catch (error) {
@@ -387,9 +387,9 @@ app.post('/subscribedintership/:internshipId', authenticate,async (req, res) => 
       res.status(500).send('Error fetching subscribed users for intership');
     }
   });
-  app.get('/getsubscribedintership', authenticate,async (req, res) => {
+  app.get('/getsubscribedintership/:userId',async (req, res) => {
     try {
-      const userDoc = await db.collection('subscribeintership').doc(req.userId).get();
+      const userDoc = await db.collection('subscribeintership').doc(req.params.userId).get();
       const subscribeintership = userDoc.data();
       res.status(200).send(subscribeintership);
     } catch (error) {
@@ -403,7 +403,6 @@ app.post('/file', upload.single('file'), async (req, res) => {
       if (!file) {
         return res.status(400).send('No file uploaded');
       }
-  
       const filename = `intership/${file.originalname}`;
       const fileRef = bucket.file(filename);
       const options = {
@@ -412,12 +411,10 @@ app.post('/file', upload.single('file'), async (req, res) => {
         },
       };
       await fileRef.save(file.buffer, options);
-  
       const downloadUrl = await fileRef.getSignedUrl({
         action: 'read',
         expires: '03-17-2035', // Replace with your desired expiration date
       });
-   
       return res.send({success:"File uploaded",downloadUrl});
     } catch (err) {
       console.error(err);
