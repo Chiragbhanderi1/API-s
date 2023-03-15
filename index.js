@@ -282,99 +282,43 @@ app.delete('/deleteevent/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.post('/subscribedcourses/:courseId', authenticate,async (req, res) => {
-    const userId = req.userId;
-    const courseId = req.params.courseId; 
-    const data = req.body;  
-    const coursesRef =  db.collection("subscribecourse")
-    try { 
-      coursesRef.doc(userId).get()
-      .then(doc => {
-        if (doc.exists) {
-          console.log(1);
-          // Update the existing course
-          coursesRef.doc(userId).update(data)
-          .then(() => {
-            console.log('Course updated successfully');
-            db.collection('subscribecourse').doc(userId).update({
-              subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
-            });
-            res.status(200).send('User subscribed to course successfully');
-          })
-          .catch(err => {
-            console.error(err);
-          });
-        } else {
-          // Add the new course to Firebase
-          coursesRef.doc(userId).set(data)
-            .then(() => {
-              console.log('New course added successfully');
-              // Add the course ID to the user's subscribed courses array
-              db.collection('subscribecourse').doc(userId).update({
-                subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
-              });
-              res.status(200).send('User subscribed to course successfully');
-            })
-            .catch(err => {
-              console.error(err);
-            });
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      });
-
-    } catch (error) {
-      console.error(error);
-      res.status(500).send(error);
-    }
-  });
-app.post('/subscribedintership/:internshipId', authenticate,async (req, res) => {
-    const userId = req.userId;
-    const intershipId = req.params.internshipId; 
-    const data = req.body;
-    const intershipRef = db.collection("subscribeintership")
+app.post('/subscribedcourses/:courseId',async (req, res) => {
+  const userId = req.body.userId;  
+  const type = req.body.type;
+  const courseId = req.params.courseId;
+  try {
+    // Add the course ID to the user's subscribed courses array
+    db.collection('subscribecourse').doc(userId).update({
+      subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId+type)
+    });    
+      res.status(200).send('User subscribed to internship successfully');       
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
+app.get('/getsubscribedcourses/:userId',async (req, res) => {
+  try {
+    const userDoc = await db.collection('subscribecourse').doc(req.params.userId).get();
+    const subscribecourse = userDoc.data();
+    res.status(200).send(subscribecourse);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching subscribed users for intership');
+  }
+});
+app.post('/subscribedintership/:internshipId',async (req, res) => {
+    const userId = req.body.userId;  
+    const type = req.body.type;
+    const intershipId = req.params.internshipId;
     try {
-      intershipRef.doc(userId).get()
-      .then(doc => {
-        if (doc.exists) {
-          console.log(1);
-          // Update the existing course
-          intershipRef.doc(userId).update(data)
-          .then(() => {
-            console.log('Course updated successfully');
-            // Add the course ID to the user's subscribed courses array
-            db.collection('subscribeintership').doc(userId).update({
-              subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId)
-              });
-              res.status(200).send('User subscribed to internship successfully');
-          })
-          .catch(err => {
-            console.error(err);
-          });
-        } else {
-          // Add the new course to Firebase
-          intershipRef.doc(userId).set(data)
-            .then(() => {
-              console.log('New course added successfully');
-              // Add the course ID to the user's subscribed courses array
-              db.collection('subscribeintership').doc(userId).update({
-              subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId)
-              });
-              res.status(200).send('User subscribed to internship successfully');
-            })
-            .catch(err => {
-              console.error(err);
-            });
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      });
       // Add the course ID to the user's subscribed courses array
-
+      db.collection('subscribeintership').doc(userId).update({
+        subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId+type)
+      });    
+        res.status(200).send('User subscribed to internship successfully');       
     } catch (error) {
-      console.error(error);
+      console.error(error); 
       res.status(500).send(error);
     }
   });
