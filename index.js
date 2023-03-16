@@ -26,26 +26,6 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
 
-//  Authenticate
-const authenticate = async (req, res, next) => {
-  try { 
-    // firebase.auth().currentUser.getIdToken(/* forceRefresh */ true).then(function(idToken) {
-    //   console.log(idToken);
-    // }).catch(function(error) {
-    //   console.log(error)
-    // });
-    const { authorization } = req.headers;
-    const decodedToken = await admin.auth().verifyIdToken(authorization);
-    // let user = await admin.auth().getUser(decodedToken.uid);
-    // let email = user.providerData[0].email;
-    req.userId = decodedToken.email;
-    // console.log(req.userId);
-    next();
-  } 
-  catch (error) {
-    res.status(401).send({ message : 'Unauthorized',error });
-  }
-};
 
 app.post('/courses',async(req,res)=>{
     try{
@@ -100,7 +80,10 @@ app.get('/getcourses',async(req,res)=>{
                     doc.data().details,
                     doc.data().duration,
                     doc.data().benifits,
-                    doc.data().img
+                    doc.data().img,
+                    doc.data().materails,
+                    doc.data().videos,
+                    doc.data().assignment
                 );
                 coursesArray.push(course);
             });
