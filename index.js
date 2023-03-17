@@ -21,11 +21,8 @@ const upload = multer({
     },
   });
 const db =  admin.firestore();
-
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
-
-
 
 app.post('/courses',async(req,res)=>{
     try{
@@ -54,11 +51,39 @@ app.post('/events',async(req,res)=>{
         res.send(err)
     }
 })
+app.post('/login',async(req,res)=>{
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        admin.auth().signInWithEmailAndPassword({email:email, password:password})
+            .then(userCredential => {
+            // User is signed in.
+            const user = userCredential.user;
+            console.log(`User ${user.uid} is signed in.`);
+            })
+            .catch(error => {
+              console.error(`Error authenticating user: ${error}`);
+            });
+        res.send(userRecord)
+    } catch (error) {
+        res.send(error)
+    }
+})
 app.post('/users',async(req,res)=>{
     try{
-      const data = req.body;
-      const response = await db.collection("users").doc(req.body.email).set(data)
-        res.send(response)
+        const data = {name:req.body.name,college:req.body.college , email:req.body.email,contact:req.body.contact,year:req.body.year,address:req.body.address};
+        const email = req.body.email
+        const password = req.body.password
+        const ressign = await admin.auth().createUser({
+            email: email,
+            password: password
+          })
+        if(ressign.uid != null){
+            const response = await db.collection("users").doc(req.body.email).set(data)
+            res.send({success:"success",response})
+        }else{
+            res.send(ressign)
+        }
     }catch(err){
         res.send(err)
     }
