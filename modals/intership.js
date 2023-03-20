@@ -1,5 +1,5 @@
 class Intership {
-    constructor(id, title, subtitle, details,perks,price,img ) {
+    constructor(id, title, subtitle, details,perks,price,img,students ) {
             this.id = id;
             this.title = title;
             this.subtitle = subtitle;
@@ -7,6 +7,7 @@ class Intership {
             this.perks = perks;
             this.price = price;
             this.img = img;
+            this.students=students
     }
 }
 

@@ -26,7 +26,8 @@ app.use(express.urlencoded({extended:true}))
 
 app.post('/courses',async(req,res)=>{
     try{
-      const data = req.body;
+      const students=[]
+      const data = {title:req.body.title,subtitle:req.body.subtitle,details:req.body.details,benifits:req.body.benifits,videos:req.body.videos,assignments:req.body.assignments,duration:req.body.duration,materails:req.body.materails,img:req.body.img,students:students};
       const response = await db.collection("courses").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -35,7 +36,8 @@ app.post('/courses',async(req,res)=>{
 })
 app.post('/interships',async(req,res)=>{
     try{
-      const data = req.body;
+      const students=[]
+      const data = {title:req.body.title,subtitle:req.body.subtitle,details:req.body.details,img:req.body.img,students:students};
       const response = await db.collection("interships").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -44,7 +46,8 @@ app.post('/interships',async(req,res)=>{
 })
 app.post('/events',async(req,res)=>{
     try{
-      const data = req.body;
+      const students=[]
+      const data = {title:req.body.title,subtitle:req.body.subtitle,date:req.body.date,img:req.body.img,details:req.body.details,price:req.body.price,students:students};
       const response = await db.collection("events").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -74,16 +77,12 @@ app.post('/users',async(req,res)=>{
         const data = {name:req.body.name,college:req.body.college , email:req.body.email,contact:req.body.contact,year:req.body.year,address:req.body.address};
         const email = req.body.email
         const password = req.body.password
-        const ressign = await admin.auth().createUser({
+        await admin.auth().createUser({
             email: email,
             password: password
           })
-        if(ressign.uid != null){
-            const response = await db.collection("users").doc(req.body.email).set(data)
-            res.send({success:"success",response})
-        }else{
-            res.send(ressign)
-        }
+          const response = await db.collection("users").doc(req.body.email).set(data)
+          res.send(response)
     }catch(err){
         res.send(err)
     }
@@ -108,7 +107,8 @@ app.get('/getcourses',async(req,res)=>{
                     doc.data().img,
                     doc.data().materails,
                     doc.data().videos,
-                    doc.data().assignment
+                    doc.data().assignment,
+                    doc.data().students
                 );
                 coursesArray.push(course);
             });
@@ -134,7 +134,8 @@ app.get('/getinterships',async(req,res)=>{
                     doc.data().details,
                     doc.data().perks,
                     doc.data().price,
-                    doc.data().img
+                    doc.data().img,
+                    doc.data().students
                 );
                 intershipsArray.push(intership);
             });
@@ -161,7 +162,8 @@ app.get('/getevents',async(req,res)=>{
                     doc.data().price,
                     doc.data().date,
                     doc.data().details,
-                    doc.data().img
+                    doc.data().img,
+                    doc.data().students
                 );
                 eventArray.push(event);
             });
@@ -288,17 +290,30 @@ app.delete('/deleteevent/:id',async(req,res)=>{
         res.send('course record deleted successfuly');
     }catch(err){
         res.send(err)
-    }
+    } 
 })
-app.post('/subscribedcourses/:courseId',async (req, res) => {
+app.post('/subscribedcourse/:courseId',async (req, res) => {
   const userId = req.body.userId;  
   const type = req.body.type;
   const courseId = req.params.courseId;
+  const subscribedCourses =[courseId+" "+type]
   try {
-    // Add the course ID to the user's subscribed courses array
-    db.collection('subscribecourse').doc(userId).update({
-      subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId+type)
-    });    
+    db.collection('subscribecourse').doc(userId).get()
+      .then((docSnapshot) => {
+      if (docSnapshot.exists) {
+        db.collection('subscribecourse').doc(userId).onSnapshot((doc) => {
+          db.collection('subscribecourse').doc(userId).update({
+            subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId+" "+type)
+          }); 
+        });
+      } else {
+        // create the document
+        db.collection('subscribecourse').doc(userId).set({subscribedCourses})
+      }
+    });
+    db.collection('courses').doc(courseId).update({
+      students: admin.firestore.FieldValue.arrayUnion(userId)
+    });
       res.status(200).send('User subscribed to internship successfully');       
   } catch (error) {
     console.error(error); 
@@ -314,16 +329,70 @@ app.get('/getsubscribedcourses/:userId',async (req, res) => {
     console.error(error);
     res.status(500).send('Error fetching subscribed users for intership');
   }
+});  
+app.post('/subscribedevent/:eventId',async (req, res) => {
+  const userId = req.body.userId;
+  const eventId = req.params.eventId;
+  const subscribedEvents =[eventId]
+  try {
+    // Add the event ID to the user's subscribed events array
+    db.collection('subscribeevent').doc(userId).get()
+    .then((docSnapshot) => {
+      if (docSnapshot.exists) {
+        db.collection('subscribeevent').doc(userId).onSnapshot((doc) => {
+          db.collection('subscribeevent').doc(userId).update({
+            subscribedEvents: admin.firestore.FieldValue.arrayUnion(eventId)
+          }); 
+        });
+      } else {
+        // create the document
+        db.collection('subscribeevent').doc(userId).set({subscribedEvents})
+      }
+      db.collection('events').doc(eventId).update({
+        students: admin.firestore.FieldValue.arrayUnion(userId)
+      });
+    });
+      res.status(200).send('User subscribed to event successfully');       
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
+app.get('/getsubscribedevents/:userId',async (req, res) => {
+  try {
+    const userDoc = await db.collection('subscribeevent').doc(req.params.userId).get();
+    const subscribeevent = userDoc.data();
+    res.status(200).send(subscribeevent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching subscribed users for event');
+  }
 });
 app.post('/subscribedintership/:internshipId',async (req, res) => {
     const userId = req.body.userId;  
-    const type = req.body.type;
+    const type = req.body.type; 
     const intershipId = req.params.internshipId;
+    const subscribedInterships =[intershipId+" "+type]
     try {
       // Add the course ID to the user's subscribed courses array
-      db.collection('subscribeintership').doc(userId).update({
-        subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId+type)
-      });    
+    db.collection('subscribeintership').doc(userId).set({resume:req.body.resume})
+      db.collection('subscribeintership').doc(userId).get()
+      .then((docSnapshot) => {
+      if (docSnapshot.exists) {
+        db.collection('subscribeintership').doc(userId).onSnapshot((doc) => {
+          db.collection('subscribeintership').doc(userId).update({
+            subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId+" "+type)
+          }); 
+        });
+      } else {
+        // create the document
+        db.collection('subscribeintership').doc(userId).set({subscribedInterships})
+      }
+    }); 
+    
+    db.collection('interships').doc(intershipId).update({
+      students: admin.firestore.FieldValue.arrayUnion(userId)
+    });
         res.status(200).send('User subscribed to internship successfully');       
     } catch (error) {
       console.error(error); 
