@@ -350,13 +350,13 @@ app.post('/subscribedintership/:internshipId',async (req, res) => {
       res.status(500).send('Error fetching subscribed users for intership');
     }
   });
-app.post('/file', upload.single('file'), async (req, res) => {
+app.post('/filecourses', upload.single('file'), async (req, res) => {
     try {
       const file = req.file;
       if (!file) {
         return res.status(400).send('No file uploaded');
       }
-      const filename = `intership/${file.originalname}`;
+      const filename = `Courses/${file.originalname}`;
       const fileRef = bucket.file(filename);
       const options = {
         metadata: {
@@ -374,21 +374,69 @@ app.post('/file', upload.single('file'), async (req, res) => {
       return res.status(500).send('Server error');
     } 
   }); 
-app.get('/file/:filename', (req, res) => { 
-    const filename = req.params.filename;
-    const file = bucket.file(filename);
-  
+app.post('/fileinteship', upload.single('file'), async (req, res) => {
     try {
-      const stream = file.createReadStream();
-      stream.on('error', err => {
-        console.log(err)
-        res.status(404).send('File not found');
+      const file = req.file;
+      if (!file) {
+        return res.status(400).send('No file uploaded');
+      }
+      const filename = `Intership/${file.originalname}`;
+      const fileRef = bucket.file(filename);
+      const options = {
+        metadata: {
+          contentType: file.mimetype,
+        },
+      };
+      await fileRef.save(file.buffer, options);
+      const downloadUrl = await fileRef.getSignedUrl({
+        action: 'read',
+        expires: '03-17-2035', // Replace with your desired expiration date
       });
-      stream.pipe(res);
+      return res.send({success:"File uploaded",downloadUrl});
     } catch (err) {
-      res.status(500).send('Server error');
-    }
-  });
+      console.error(err);
+      return res.status(500).send('Server error');
+    } 
+  }); 
+app.post('/fileevent', upload.single('file'), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).send('No file uploaded');
+      }
+      const filename = `Event/${file.originalname}`;
+      const fileRef = bucket.file(filename);
+      const options = {
+        metadata: {
+          contentType: file.mimetype,
+        },
+      };
+      await fileRef.save(file.buffer, options);
+      const downloadUrl = await fileRef.getSignedUrl({
+        action: 'read',
+        expires: '03-17-2035', // Replace with your desired expiration date
+      });
+      return res.send({success:"File uploaded",downloadUrl});
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send('Server error');
+    } 
+  }); 
+// app.get('/file/:filename', (req, res) => { 
+//     const filename = req.params.filename;
+//     const file = bucket.file(filename);
+  
+//     try {
+//       const stream = file.createReadStream();
+//       stream.on('error', err => {
+//         console.log(err)
+//         res.status(404).send('File not found');
+//       });
+//       stream.pipe(res);
+//     } catch (err) {
+//       res.status(500).send('Server error');
+//     }
+//   });
 const PORT = process.env.PORT || 8000;
 app.listen(PORT , ()=>{
     console.log(`Server is running on port ${PORT}`) 
