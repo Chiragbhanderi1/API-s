@@ -263,7 +263,17 @@ app.put('/updateevent/:id',async(req,res)=>{
         const data = req.body; 
         const event =  db.collection("events").doc(req.params.id);
         await event.update(data);
-        res.send('course record updated successfuly');
+        res.send('events record updated successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
+app.put('/updateuser/:id',async(req,res)=>{
+    try{
+        const data = req.body; 
+        const user =  db.collection("users").doc(req.params.id);
+        await user.update(data);
+        res.send('users record updated successfuly');
     }catch(err){
         res.send(err)
     }
