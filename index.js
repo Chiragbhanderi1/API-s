@@ -77,10 +77,13 @@ app.post('/users',async(req,res)=>{
         const data = {name:req.body.name,college:req.body.college , email:req.body.email,contact:req.body.contact,year:req.body.year,address:req.body.address};
         const email = req.body.email
         const password = req.body.password
+        const name = req.body.name
         await admin.auth().createUser({
             email: email,
-            password: password
+            password: password,
+            displayName:name
           })
+          
           const response = await db.collection("users").doc(req.body.email).set(data)
           res.send(response)
     }catch(err){
