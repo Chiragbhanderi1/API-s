@@ -323,8 +323,22 @@ app.post('/submittedassignment/:userId',async (req, res) => {
   try { 
     const data = req.body;
     const response = await db.collection("submittedassignment").doc(userId).set(data)
-    
     res.status(200).send("Success");       
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
+app.get('/getsubmittedassignment/:userId',async (req, res) => {
+  const userId = req.params.userId;  
+  try { 
+    const eventById =  db.collection("submittedassignment").doc(userId);
+      const data = await eventById.get();
+      if(!data.exists) {
+          res.status(404).send('No assignment record found');
+      }else {
+          res.send(data.data());
+      }      
   } catch (error) {
     console.error(error); 
     res.status(500).send(error);
