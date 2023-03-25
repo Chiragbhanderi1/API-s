@@ -27,7 +27,18 @@ app.use(express.urlencoded({extended:true}))
 app.post('/courses',async(req,res)=>{
     try{
       const students=[]
-      const data = {title:req.body.title,subtitle:req.body.subtitle,details:req.body.details,benifits:req.body.benifits,videos:req.body.videos,assignments:req.body.assignments,duration:req.body.duration,materails:req.body.materails,img:req.body.img,students:students};
+      const data = {title:req.body.title,
+                    price:req.body.price,
+                    subtitle:req.body.subtitle,
+                    details:req.body.details,
+                    benifits:req.body.benifits,
+                    videos:req.body.videos,
+                    assignments:req.body.assignments,
+                    duration:req.body.duration,
+                    materails:req.body.materails,
+                    videos:req.body.videos,
+                    img:req.body.img,
+                    students:students};
       const response = await db.collection("courses").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -37,7 +48,12 @@ app.post('/courses',async(req,res)=>{
 app.post('/interships',async(req,res)=>{
     try{
       const students=[]
-      const data = {title:req.body.title,subtitle:req.body.subtitle,details:req.body.details,img:req.body.img,students:students};
+      const data = {title:req.body.title,
+                    perks:req.body.perks,
+                    subtitle:req.body.subtitle,
+                    details:req.body.details,
+                    img:req.body.img,
+                    students:students};
       const response = await db.collection("interships").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -338,6 +354,23 @@ app.get('/getsubmittedassignment/:userId',async (req, res) => {
           res.status(404).send('No assignment record found');
       }else {
           res.send(data.data());
+      }      
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
+app.get('/getsubmittedassignment',async (req, res) => {
+  try { 
+    const eventById =  db.collection("submittedassignment");
+      const data = await eventById.get();
+      if(!data.exists) {
+          res.status(404).send('No assignment record found');
+      }else {
+          data.forEach((data)=>{
+            document.push(data.data())
+          })
+          res.send(document);
       }      
   } catch (error) {
     console.error(error); 
