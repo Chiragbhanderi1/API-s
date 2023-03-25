@@ -215,6 +215,19 @@ app.get('/getcourse/:id',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/getuser/:id',async(req,res)=>{
+  try{
+      const userById =  db.collection("users").doc(req.params.id);
+      const data = await userById.get();
+      if(!data.exists) {
+          res.status(404).send('No user record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
 app.get('/getintership/:id',async(req,res)=>{
   try{
       const intershipById =  db.collection("interships").doc(req.params.id);
@@ -305,6 +318,18 @@ app.delete('/deleteevent/:id',async(req,res)=>{
         res.send(err)
     } 
 })
+app.post('/submittedassignment/:userId',async (req, res) => {
+  const userId = req.params.userId;  
+  try { 
+    const data = req.body;
+    const response = await db.collection("submittedassignment").doc(userId).set(data)
+    
+    res.status(200).send("Success");       
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
 app.post('/subscribedcourse/:courseId',async (req, res) => {
   const userId = req.body.userId;  
   const type = req.body.type;
