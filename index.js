@@ -364,14 +364,15 @@ app.get('/getsubmittedassignment',async (req, res) => {
   try { 
     const eventById =  db.collection("submittedassignment");
       const data = await eventById.get();
-      if(!data.exists) {
-          res.status(404).send('No assignment record found');
-      }else {
+      const document = []
+      // if(!data.exists) {
+      //     res.status(404).send('No assignment record found');
+      // }else {
           data.forEach((data)=>{
             document.push(data.data())
           })
           res.send(document);
-      }      
+      // }      
   } catch (error) {
     console.error(error); 
     res.status(500).send(error);
