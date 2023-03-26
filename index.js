@@ -337,10 +337,10 @@ app.delete('/deleteevent/:id',async(req,res)=>{
 app.post('/submittedassignment/:userId',async (req, res) => {
   const userId = req.params.userId;  
   try { 
-    const data = req.body;
-    const response = await db.collection("submittedassignment").doc(userId).set(data)
-    res.status(200).send("Success");       
-  } catch (error) {
+    const data = {assignment:req.body.assignment,user:userId,submitted_on:new Date(),course:req.body.course};
+    const response = await db.collection("submittedassignment").doc().set(data)
+    res.status(200).send(response);       
+  } catch (error) {   
     console.error(error); 
     res.status(500).send(error);
   }
