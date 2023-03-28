@@ -27,7 +27,8 @@ app.use(express.urlencoded({extended:true}))
 app.post('/courses',async(req,res)=>{
     try{
       const students=[]
-      const data = {title:req.body.title,
+      const data = {
+                    title:req.body.title,
                     price:req.body.price,
                     subtitle:req.body.subtitle,
                     details:req.body.details,
@@ -38,7 +39,9 @@ app.post('/courses',async(req,res)=>{
                     materails:req.body.materails,
                     videos:req.body.videos,
                     img:req.body.img,
-                    students:students};
+                    students:students,
+                    created_on:new Date()
+                  };
       const response = await db.collection("courses").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -53,7 +56,9 @@ app.post('/interships',async(req,res)=>{
                     subtitle:req.body.subtitle,
                     details:req.body.details,
                     img:req.body.img,
-                    students:students};
+                    students:students,
+                    created_on:new Date()
+                  };
       const response = await db.collection("interships").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -90,7 +95,7 @@ app.post('/login',async(req,res)=>{
 })
 app.post('/users',async(req,res)=>{
     try{
-        const data = {name:req.body.name,college:req.body.college , email:req.body.email,contact:req.body.contact,year:req.body.year,address:req.body.address};
+        const data = {name:req.body.name,college:req.body.college , email:req.body.email,contact:req.body.contact,year:req.body.year,address:req.body.address,created_on:new Date()};
         const email = req.body.email
         const password = req.body.password
         const name = req.body.name
