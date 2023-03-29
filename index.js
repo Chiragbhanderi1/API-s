@@ -3,6 +3,7 @@ const app  = express();
 const Course = require('./modals/course');
 const Interships = require('./modals/intership');
 const Event = require('./modals/event');
+const TechnicalBlog = require('./modals/technicalBlog')
 const User = require('./modals/user');
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
@@ -75,6 +76,15 @@ app.post('/events',async(req,res)=>{
         res.send(err)
     }
 })
+app.post('/technicalblogs',async(req,res)=>{
+    try{
+      const data = {title:req.body.title,subtitle:req.body.subtitle,date:new Date(),img:req.body.img,details:req.body.details};
+      const response = await db.collection("technicalBlog").doc(req.body.title).set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
 app.post('/login',async(req,res)=>{
     try {
         const email = req.body.email;
@@ -113,7 +123,7 @@ app.post('/users',async(req,res)=>{
 })
 app.get('/getcourses',async(req,res)=>{
     try{
-        const courses =  db.collection("courses");
+        const courses =  db.collection("courses").orderBy("created_on",'desc');
         const data = await courses.get();
         const coursesArray = [];
         if(data.empty) {
@@ -144,7 +154,7 @@ app.get('/getcourses',async(req,res)=>{
 })
 app.get('/getinterships',async(req,res)=>{
     try{
-        const interships =  db.collection("interships");
+        const interships =  db.collection("interships").orderBy("created_on",'desc');
         const data = await interships.get();
         const intershipsArray = [];
         if(data.empty) {
@@ -171,7 +181,7 @@ app.get('/getinterships',async(req,res)=>{
 })
 app.get('/getevents',async(req,res)=>{
     try{
-        const events =  db.collection("events");
+        const events =  db.collection("events").orderBy("date","desc");
         const data = await events.get();
         const eventArray = [];
         if(data.empty) {
@@ -197,9 +207,34 @@ app.get('/getevents',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/gettechnicalblogs',async(req,res)=>{
+    try{
+        const blogs =  db.collection("technicalBlog").orderBy('date','desc');
+        const data = await blogs.get();
+        const blogArray = [];
+        if(data.empty) {
+            res.status(404).send('No Blog record found');
+        }else {
+            data.forEach(doc => {
+                const blog = new TechnicalBlog(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle, 
+                    doc.data().date,
+                    doc.data().details,
+                    doc.data().img,
+                );
+                blogArray.push(blog);
+            });
+            res.send(blogArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getusers',async(req,res)=>{
     try{
-        const users =  db.collection("users");
+        const users =  db.collection("users").orderBy('created_on','desc');
         const data = await users.get();
         const userArray = []; 
         if(data.empty) {
@@ -275,6 +310,19 @@ app.get('/getevent/:id',async(req,res)=>{
       res.send(err)
   }
 })
+app.get('/gettechnicalblog/:id',async(req,res)=>{
+  try{
+      const blog =  db.collection("technicalBlog").doc(req.params.id);
+      const data = await blog.get();
+      if(!data.exists) {
+          res.status(404).send('No Blog record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
 app.put('/updatecourse/:id',async(req,res)=>{
     try{
         const data = req.body; 
@@ -305,6 +353,16 @@ app.put('/updateevent/:id',async(req,res)=>{
         res.send(err)
     }
 })
+app.put('/updatetechnicalblog/:id',async(req,res)=>{
+    try{
+        const data = req.body; 
+        const blog =  db.collection("technicalBlog").doc(req.params.id);
+        await blog.update(data);
+        res.send('Blog record updated successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
 app.put('/updateuser/:id',async(req,res)=>{
     try{
         const data = req.body; 
@@ -326,7 +384,7 @@ app.delete('/deletecourse/:id',async(req,res)=>{
 app.delete('/deleteintership/:id',async(req,res)=>{
     try{;
         db.collection("interships").doc(req.params.id).delete();
-        res.send('course record deleted successfuly');
+        res.send('internship record deleted successfuly');
     }catch(err){
         res.send(err)
     }
@@ -334,7 +392,15 @@ app.delete('/deleteintership/:id',async(req,res)=>{
 app.delete('/deleteevent/:id',async(req,res)=>{
     try{;
         db.collection("events").doc(req.params.id).delete();
-        res.send('course record deleted successfuly');
+        res.send('event record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    } 
+})
+app.delete('/deletetechnicalblog/:id',async(req,res)=>{
+    try{;
+        db.collection("technicalBlog").doc(req.params.id).delete();
+        res.send('Blog record deleted successfuly');
     }catch(err){
         res.send(err)
     } 
@@ -342,7 +408,7 @@ app.delete('/deleteevent/:id',async(req,res)=>{
 app.post('/submittedassignment/:userId',async (req, res) => {
   const userId = req.params.userId;  
   try { 
-    const data = {assignment:req.body.assignment,user:userId,submitted_on:new Date(),course:req.body.course};
+    const data = {assignment:req.body.assignment,user:userId,submitted_on:new Date(),course:req.body.course,name:req.body.name};
     const response = await db.collection("submittedassignment").doc().set(data)
     res.status(200).send(response);       
   } catch (error) {   
@@ -367,8 +433,8 @@ app.get('/getsubmittedassignment/:userId',async (req, res) => {
 });
 app.get('/getsubmittedassignment',async (req, res) => {
   try { 
-    const eventById =  db.collection("submittedassignment");
-      const data = await eventById.get();
+    const assignment =  db.collection("submittedassignment").orderBy('submitted_on','desc');
+      const data = await assignment.get();
       const document = []
       // if(!data.exists) {
       //     res.status(404).send('No assignment record found');
