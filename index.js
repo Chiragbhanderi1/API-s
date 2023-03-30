@@ -449,11 +449,12 @@ app.get('/getsubmittedassignment',async (req, res) => {
     res.status(500).send(error);
   }
 });
-app.post('/subscribedcourse/:courseId',async (req, res) => {
-  const userId = req.body.userId;  
-  const type = req.body.type;
-  const courseId = req.params.courseId;
+app.post('/subscribedcourse/:userId',async (req, res) => {
+  const userId = req.params.userId;     
+  const type = req.body.type; 
+  const courseId = req.body.courseId; 
   const subscribedCourses =[courseId+" "+type]
+  console.log(subscribedCourses)
   try {
     db.collection('subscribecourse').doc(userId).get()
       .then((docSnapshot) => {
@@ -471,7 +472,7 @@ app.post('/subscribedcourse/:courseId',async (req, res) => {
     db.collection('courses').doc(courseId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
     });
-      res.status(200).send('User subscribed to internship successfully');       
+      res.status(200).send('User subscribed to course successfully');       
   } catch (error) {
     console.error(error); 
     res.status(500).send(error);
@@ -487,9 +488,9 @@ app.get('/getsubscribedcourses/:userId',async (req, res) => {
     res.status(500).send('Error fetching subscribed users for intership');
   }
 });  
-app.post('/subscribedevent/:eventId',async (req, res) => {
-  const userId = req.body.userId;
-  const eventId = req.params.eventId;
+app.post('/subscribedevent/:userId',async (req, res) => {
+  const userId = req.params.userId;
+  const eventId = req.body.eventId;
   const subscribedEvents =[eventId]
   try {
     // Add the event ID to the user's subscribed events array
@@ -525,10 +526,10 @@ app.get('/getsubscribedevents/:userId',async (req, res) => {
     res.status(500).send('Error fetching subscribed users for event');
   }
 });
-app.post('/subscribedintership/:internshipId',async (req, res) => {
-    const userId = req.body.userId;  
+app.post('/subscribedintership/:userId',async (req, res) => {
+    const userId = req.params.userId;  
     const type = req.body.type; 
-    const intershipId = req.params.internshipId;
+    const intershipId = req.body.internshipId;
     const subscribedInterships =[intershipId+" "+type]
     try {
       // Add the course ID to the user's subscribed courses array
