@@ -454,28 +454,30 @@ app.post('/subscribedcourse/:userId',async (req, res) => {
   const type = req.body.type; 
   const courseId = req.body.courseId; 
   const subscribedCourses =[courseId+" "+type]
-  console.log(subscribedCourses)
   try {
     db.collection('subscribecourse').doc(userId).get()
       .then((docSnapshot) => {
       if (docSnapshot.exists) {
+        console.log('here in if')
         db.collection('subscribecourse').doc(userId).onSnapshot((doc) => {
           db.collection('subscribecourse').doc(userId).update({
             subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId+" "+type)
           }); 
         });
+        console.log("here in if after update")
       } else {
+        console.log("here in else")
         // create the document
         db.collection('subscribecourse').doc(userId).set({subscribedCourses})
       }
     });
-    db.collection('courses').doc(courseId).update({
+    const res = db.collection('courses').doc(courseId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
     });
+    console.log(res)
       res.status(200).send('User subscribed to course successfully');       
   } catch (error) {
-    console.error(error); 
-    res.status(500).send(error);
+    res.status(500).send("error here"+error);
   }
 });
 app.get('/getsubscribedcourses/:userId',async (req, res) => {
