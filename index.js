@@ -455,6 +455,7 @@ app.post('/subscribedcourse/:userId',async (req, res) => {
   const courseId = req.body.courseId; 
   const subscribedCourses =[courseId+" "+type]
   try {
+    console.log("starts")
     db.collection('subscribecourse').doc(userId).get()
       .then((docSnapshot) => {
       if (docSnapshot.exists) {
