@@ -471,10 +471,10 @@ app.post('/subscribedcourse/:userId',async (req, res) => {
         db.collection('subscribecourse').doc(userId).set({subscribedCourses})
       }
     });
-    const resp = db.collection('courses').doc(courseId).update({
+    db.collection('courses').doc(courseId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
-    });
-    console.log(resp)
+    }).then((resp)=>console.log(resp))
+    
       res.status(200).send('User subscribed to course successfully');       
   } catch (error) {
     res.status(500).send("error here"+error);
