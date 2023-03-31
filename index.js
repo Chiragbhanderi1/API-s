@@ -449,36 +449,45 @@ app.get('/getsubmittedassignment',async (req, res) => {
     res.status(500).send(error);
   }
 });
-app.post('/subscribedcourse/:userId',async (req, res) => {
-  const userId = req.params.userId;     
+app.put('/subscribedcourse/:userId',async (req, res) => {
+  // const userId = req.params.userId;     
   const type = req.body.type; 
   const courseId = req.body.courseId; 
-  const subscribedCourses =[courseId+" "+type]
+  const courses =[courseId+" "+type]
+  const { userId } = req.params;
+  // const { courses } = req.body;
+
   try {
-    db.collection('subscribecourse').doc(userId).get()
-      .then((docSnapshot) => {
-      if (docSnapshot.exists) {
-        console.log('here in if')
-        db.collection('subscribecourse').doc(userId).onSnapshot((doc) => {
-          db.collection('subscribecourse').doc(userId).update({
-            subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId+" "+type)
-          }); 
-        });
-        console.log("here in if after update")
-      } else {
-        console.log("here in else")
-        // create the document
-        db.collection('subscribecourse').doc(userId).set({subscribedCourses})
+    // Check if user exists in Firestore
+    const userRef = admin.firestore().collection('subscribecourse').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      // Create new user document if it does not exist
+      await userRef.set({ subscribedCourses: [] });
+    }
+
+    // Get current subscribedCourses array for the user
+    const subscribedCourses = userDoc.exists ? userDoc.data().subscribedCourses : [];
+
+    // Add new courses to subscribedCourses array
+    courses.forEach(course => {
+      if (!subscribedCourses.includes(course)) {
+        subscribedCourses.push(course);
       }
     });
-    db.collection('courses').doc(courseId).update({
+
+    // Update subscribedCourses array in Firestore
+    await userRef.update({ subscribedCourses });
+    await db.collection('courses').doc(courseId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
-    }).then((resp)=>console.log(resp))
-    
-      res.status(200).send('User subscribed to course successfully');       
+    })
+    res.status(200).json({ message: 'Subscribed courses updated successfully' });
   } catch (error) {
-    res.status(500).send("error here"+error);
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred while updating subscribed courses' });
   }
+
 });
 app.get('/getsubscribedcourses/:userId',async (req, res) => {
   try {
