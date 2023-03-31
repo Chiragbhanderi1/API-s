@@ -418,7 +418,6 @@ app.post('/submittedassignment/:userId',async (req, res) => {
 });
 app.get('/getsubmittedassignment/:userId',async (req, res) => {
   try { 
-    console.log("here")
     const userId = req.params.userId;
     const assignment =  db.collection("submittedassignment").orderBy('submitted_on','desc');
       const data = await assignment.get();
