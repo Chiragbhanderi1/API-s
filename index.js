@@ -408,7 +408,7 @@ app.delete('/deletetechnicalblog/:id',async(req,res)=>{
 app.post('/submittedassignment/:userId',async (req, res) => {
   const userId = req.params.userId;  
   try { 
-    const data = {assignment:req.body.assignment ,user:userId,submitted_on:new Date(),course:req.body.course,que_name:req.body.que_name};
+    const data = {assignment:req.body.assignment ,user:userId,submitted_on:new Date(),course:req.body.course,que_name:req.body.que_name,name:req.body.name};
     const response = await db.collection("submittedassignment").doc().set(data)
     res.status(200).send(response);       
   } catch (error) {   
@@ -435,6 +435,24 @@ app.get('/getsubmittedassignment/:userId',async (req, res) => {
   }
 });
 app.get('/getsubmittedassignment',async (req, res) => {
+  try { 
+    const { userId, course,name } = req.query;
+    const assignment =  db.collection("submittedassignment").orderBy('submitted_on','desc');
+      const data = await assignment.get();
+      const document = [] 
+      data.forEach((data)=>{ 
+        if(data.data().user===userId && data.data().course===course && data.data().name===name){
+              document.push(data.data())
+            }
+          })
+          res.send(document);
+      // }      
+  } catch (error) {
+    console.error(error); 
+    res.status(500).send(error);
+  }
+});
+app.get('/getsubmittedassignments',async (req, res) => {
   try { 
     const assignment =  db.collection("submittedassignment").orderBy('submitted_on','desc');
       const data = await assignment.get();
