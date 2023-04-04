@@ -561,11 +561,13 @@ app.get('/getsubscribedevents/:userId',async (req, res) => {
 app.post('/subscribedintership/:userId',async (req, res) => {
     const userId = req.params.userId;  
     const type = req.body.type; 
+    const name = req.body.name;
+    const contact = req.body.contact;
     const intershipId = req.body.internshipId;
     const subscribedInterships =[intershipId+" "+type]
     try {
       // Add the course ID to the user's subscribed courses array
-    db.collection('subscribeintership').doc(userId).set({resume:req.body.resume})
+    db.collection('subscribeintership').doc(userId).set({resume:req.body.resume,name:name,contact:contact})
       db.collection('subscribeintership').doc(userId).get()
       .then((docSnapshot) => {
       if (docSnapshot.exists) {
