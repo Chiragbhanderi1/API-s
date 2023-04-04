@@ -537,8 +537,7 @@ app.post('/subscribedevent/:userId',async (req, res) => {
     }
     // Get current subscribedCourses array for the user
     const subscribedEvents = userDoc.exists ? userDoc.data().subscribedEvents : [];
-    const resp = await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId}) 
-    console.log(resp)
+    await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId}) 
     // Add new courses to subscribedCourses array
     subscribedEvents.push(eventId);
     // Update subscribedCourses array in Firestore
