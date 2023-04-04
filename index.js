@@ -559,37 +559,41 @@ app.get('/getsubscribedevents/:userId',async (req, res) => {
   }
 });
 app.post('/subscribedintership/:userId',async (req, res) => {
-    const userId = req.params.userId;  
-    const type = req.body.type; 
-    const name = req.body.name;
-    const contact = req.body.contact;
-    const intershipId = req.body.internshipId;
-    const subscribedInterships =[intershipId+" "+type]
-    try {
-      // Add the course ID to the user's subscribed courses array
-    db.collection('subscribeintership').doc(userId).set({resume:req.body.resume,name:name,contact:contact})
-      db.collection('subscribeintership').doc(userId).get()
-      .then((docSnapshot) => {
-      if (docSnapshot.exists) {
-        db.collection('subscribeintership').doc(userId).onSnapshot((doc) => {
-          db.collection('subscribeintership').doc(userId).update({
-            subscribedInterships: admin.firestore.FieldValue.arrayUnion(intershipId+" "+type)
-          }); 
-        });
-      } else {
-        // create the document
-        db.collection('subscribeintership').doc(userId).set({subscribedInterships,name:name,contact:contact,resume:req.body.resume,type:type})
-      }
-    }); 
-      
-    db.collection('interships').doc(intershipId).update({
-      students: admin.firestore.FieldValue.arrayUnion(userId)
-    });
-        res.status(200).send('User subscribed to internship successfully');       
-    } catch (error) {
-      console.error(error); 
-      res.status(500).send(error);
+  const type = req.body.type; 
+  const resume = req.body.resume; 
+  const name = req.body.name;
+  const contact = req.body.contact;
+  const intershipId = req.body.intershipId; 
+  const internships =[intershipId+" "+type]
+  const { userId } = req.params;
+
+  try {
+    // Check if user exists in Firestore
+    const userRef = admin.firestore().collection('subscribeintership').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      // Create new user document if it does not exist
+      await userRef.set({ subscribedInterships: [],name:"",contact:"",resume:"" });
     }
+
+    const subscribedInterships = userDoc.exists ? userDoc.data().subscribedInterships : [];
+    await db.collection('subscribeintership').doc(userId).set({name:name,resume:resume,contact:contact}) 
+    internships.forEach(intership => {
+      if (!subscribedInterships.includes(intership)) {
+        subscribedInterships.push(intership);
+      }
+    });
+
+    await userRef.update({ subscribedInterships });
+    await db.collection('interships').doc(intershipId).update({
+      students: admin.firestore.FieldValue.arrayUnion(userId)
+    })
+    res.status(200).json({ message: 'Subscribed Intership updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred while updating subscribed interships' });
+  }
   });
   app.get('/getsubscribedcourses/:userId',async (req, res) => {
     try {
