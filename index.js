@@ -578,10 +578,10 @@ app.post('/subscribedintership/:userId',async (req, res) => {
         });
       } else {
         // create the document
-        db.collection('subscribeintership').doc(userId).set({subscribedInterships})
+        db.collection('subscribeintership').doc(userId).set({subscribedInterships,name:name,contact:contact,resume:req.body.resume,type:type})
       }
     }); 
-    
+      
     db.collection('interships').doc(intershipId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
     });
