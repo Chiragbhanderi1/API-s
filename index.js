@@ -521,31 +521,35 @@ app.get('/getsubscribedcourses/:userId',async (req, res) => {
   }
 });  
 app.post('/subscribedevent/:userId',async (req, res) => {
-  const userId = req.params.userId;
-  const eventId = req.body.eventId;
-  const subscribedEvents =[eventId]
+  const eventId = req.body.eventId; 
+  const name = req.body.name;
+  const email = req.params.userId;
+  const contact = req.body.contact;
+  const { userId } = req.params;
+
   try {
-    // Add the event ID to the user's subscribed events array
-    db.collection('subscribeevent').doc(userId).get()
-    .then((docSnapshot) => {
-      if (docSnapshot.exists) {
-        db.collection('subscribeevent').doc(userId).onSnapshot((doc) => {
-          db.collection('subscribeevent').doc(userId).update({
-            subscribedEvents: admin.firestore.FieldValue.arrayUnion(eventId)
-          }); 
-        });
-      } else {
-        // create the document
-        db.collection('subscribeevent').doc(userId).set({subscribedEvents})
-      }
-      db.collection('events').doc(eventId).update({
-        students: admin.firestore.FieldValue.arrayUnion(userId)
-      });
-    });
-      res.status(200).send('User subscribed to event successfully');       
+    // Check if user exists in Firestore
+    const userRef = admin.firestore().collection('subscribeevent').doc(userId);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      // Create new user document if it does not exist
+      await userRef.set({ subscribedEvents: [] });
+    }
+    // Get current subscribedCourses array for the user
+    const subscribedEvents = userDoc.exists ? userDoc.data().subscribedEvents : [];
+    const resp = await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId}) 
+    console.log(resp)
+    // Add new courses to subscribedCourses array
+    subscribedEvents.push(eventId);
+    // Update subscribedCourses array in Firestore
+    await userRef.update({ subscribedEvents});
+    await db.collection('events').doc(eventId).update({
+      students: admin.firestore.FieldValue.arrayUnion(userId)
+    })
+    res.status(200).json({ message: 'Subscribed event updated successfully' });
   } catch (error) {
-    console.error(error); 
-    res.status(500).send(error);
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred while updating subscribed event' });
   }
 });
 app.get('/getsubscribedevents/:userId',async (req, res) => {
