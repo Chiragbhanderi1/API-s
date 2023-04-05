@@ -6,6 +6,7 @@ const Event = require('./modals/event');
 const TechnicalBlog = require('./modals/technicalBlog');
 const User = require('./modals/user');
 const Banner = require('./modals/banner');
+const Blog = require("./modals/blog");
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
@@ -104,6 +105,15 @@ app.post('/banners',async(req,res)=>{
     try{
       const data = {title:req.body.title,subtitle:req.body.subtitle,img:req.body.img};
       const response = await db.collection("banners").doc().set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
+app.post('/blogs',async(req,res)=>{
+    try{
+      const data = {title:req.body.title,details:req.body.details,img:req.body.img};
+      const response = await db.collection("blogs").doc().set(data)
         res.send(response)
     }catch(err){
         res.send(err)
@@ -279,6 +289,29 @@ app.get('/getbanners',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/getblogs',async(req,res)=>{
+    try{
+        const blogs =  db.collection("blogs");
+        const data = await blogs.get();
+        const blogArray = [];
+        if(data.empty) {
+            res.status(404).send('No Blogs record found');
+        }else {
+            data.forEach(doc => {
+                const blog = new Blog(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle,
+                    doc.data().img,
+                );
+                blogArray.push(blog);
+            });
+            res.send(blogArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getusers',async(req,res)=>{
     try{
         const users =  db.collection("users").orderBy('created_on','desc');
@@ -383,6 +416,19 @@ app.get('/getbanner/:id',async(req,res)=>{
       res.send(err)
   }
 })
+app.get('/getblog/:id',async(req,res)=>{
+  try{
+      const blog =  db.collection("blogs").doc(req.params.id);
+      const data = await blog.get();
+      if(!data.exists) {
+          res.status(404).send('No Blog record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
 app.put('/updatecourse/:id',async(req,res)=>{
     try{
         const data = req.body; 
@@ -433,6 +479,16 @@ app.put('/updatebanner/:id',async(req,res)=>{
         res.send(err)
     }
 })
+app.put('/updateblog/:id',async(req,res)=>{
+    try{
+        const data = req.body; 
+        const blog =  db.collection("blogs").doc(req.params.id);
+        await blog.update(data);
+        res.send('Blog record updated successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
 app.put('/updateuser/:id',async(req,res)=>{
     try{
         const data = req.body; 
@@ -445,7 +501,7 @@ app.put('/updateuser/:id',async(req,res)=>{
 })
 app.delete('/deletecourse/:id',async(req,res)=>{
     try{
-        db.collection("courses").doc(req.params.id).delete();
+        await db.collection("courses").doc(req.params.id).delete();
         res.send('course record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -453,7 +509,7 @@ app.delete('/deletecourse/:id',async(req,res)=>{
 })
 app.delete('/deleteintership/:id',async(req,res)=>{
     try{
-        db.collection("interships").doc(req.params.id).delete();
+        await db.collection("interships").doc(req.params.id).delete();
         res.send('internship record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -461,7 +517,7 @@ app.delete('/deleteintership/:id',async(req,res)=>{
 })
 app.delete('/deleteevent/:id',async(req,res)=>{
     try{
-        db.collection("events").doc(req.params.id).delete();
+        await db.collection("events").doc(req.params.id).delete();
         res.send('event record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -469,7 +525,7 @@ app.delete('/deleteevent/:id',async(req,res)=>{
 })
 app.delete('/deletetechnicalblog/:id',async(req,res)=>{
     try{
-        db.collection("technicalBlog").doc(req.params.id).delete();
+        await db.collection("technicalBlog").doc(req.params.id).delete();
         res.send('Blog record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -477,9 +533,16 @@ app.delete('/deletetechnicalblog/:id',async(req,res)=>{
 })
 app.delete('/deletebanner/:id',async(req,res)=>{
     try{
-        const resp = await db.collection("banners").doc(req.params.id).delete();
-        console.log(resp)
+        await db.collection("banners").doc(req.params.id).delete();
         res.send('Banner record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    } 
+})
+app.delete('/deleteblog/:id',async(req,res)=>{
+    try{
+        await db.collection("blogs").doc(req.params.id).delete();
+        res.send('Blog record deleted successfuly');
     }catch(err){
         res.send(err)
     } 
