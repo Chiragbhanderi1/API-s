@@ -7,11 +7,14 @@ const TechnicalBlog = require('./modals/technicalBlog');
 const User = require('./modals/user');
 const Banner = require('./modals/banner');
 const Blog = require("./modals/blog");
+const Contact =require("./modals/contactus");
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
-const cors = require('cors')
+const twilio = require('twilio');
+const cors = require('cors');
 const nodemailer = require('nodemailer');
+const client = twilio("AC5379cc509dd22a03dec92142cb441d5d","2c8f13abd180ca6d8849fc5fd3fda461");
 app.use(cors());
 admin.initializeApp({
     credential:admin.credential.cert(credentials),
@@ -119,6 +122,20 @@ app.post('/blogs',async(req,res)=>{
         res.send(err)
     }
 })
+app.post('/contactus',async(req,res)=>{
+    try{
+      const data = {name:req.body.name,email:req.body.email,message:req.body.message,contact:req.body.contact};
+      const response = await db.collection("contactus").doc().set(data)
+      client.messages.create({
+        to: '+919898660970',
+        from: '+14406368399',
+        body: `Name :${data.name},Email : ${data.email},Contact : ${data.contact},message:${data.message}`
+      })
+      res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
 app.post('/login',async(req,res)=>{
     try {
         const email = req.body.email;
@@ -155,6 +172,7 @@ app.post('/users',async(req,res)=>{
         res.send(err)
     }
 })
+
 app.get('/getcourses',async(req,res)=>{
     try{
         const courses =  db.collection("courses").orderBy("created_on",'desc');
@@ -309,6 +327,30 @@ app.get('/getblogs',async(req,res)=>{
                 blogArray.push(blog);
             });
             res.send(blogArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
+app.get('/getcontactus',async(req,res)=>{
+    try{
+        const contact =  db.collection("contactus");
+        const data = await contact.get();
+        const contactArray = [];
+        if(data.empty) {
+            res.status(404).send('No Contact record found');
+        }else {
+            data.forEach(doc => {
+                const contact = new Contact(
+                    doc.id,
+                    doc.data().name,
+                    doc.data().email,
+                    doc.data().contact,
+                    doc.data().message,
+                );
+                contactArray.push(contact);
+            });
+            res.send(contactArray);
         }
     }catch(err){
         res.send(err)
