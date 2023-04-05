@@ -103,7 +103,7 @@ app.post('/technicalblogs',async(req,res)=>{
 app.post('/banners',async(req,res)=>{
     try{
       const data = {title:req.body.title,subtitle:req.body.subtitle,img:req.body.img};
-      const response = await db.collection("banners").doc(req.body.title).set(data)
+      const response = await db.collection("banners").doc().set(data)
         res.send(response)
     }catch(err){
         res.send(err)
