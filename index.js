@@ -444,7 +444,7 @@ app.put('/updateuser/:id',async(req,res)=>{
     }
 })
 app.delete('/deletecourse/:id',async(req,res)=>{
-    try{;
+    try{
         db.collection("courses").doc(req.params.id).delete();
         res.send('course record deleted successfuly');
     }catch(err){
@@ -452,7 +452,7 @@ app.delete('/deletecourse/:id',async(req,res)=>{
     }
 })
 app.delete('/deleteintership/:id',async(req,res)=>{
-    try{;
+    try{
         db.collection("interships").doc(req.params.id).delete();
         res.send('internship record deleted successfuly');
     }catch(err){
@@ -460,7 +460,7 @@ app.delete('/deleteintership/:id',async(req,res)=>{
     }
 })
 app.delete('/deleteevent/:id',async(req,res)=>{
-    try{;
+    try{
         db.collection("events").doc(req.params.id).delete();
         res.send('event record deleted successfuly');
     }catch(err){
@@ -468,7 +468,7 @@ app.delete('/deleteevent/:id',async(req,res)=>{
     } 
 })
 app.delete('/deletetechnicalblog/:id',async(req,res)=>{
-    try{;
+    try{
         db.collection("technicalBlog").doc(req.params.id).delete();
         res.send('Blog record deleted successfuly');
     }catch(err){
@@ -476,8 +476,9 @@ app.delete('/deletetechnicalblog/:id',async(req,res)=>{
     } 
 })
 app.delete('/deletebanner/:id',async(req,res)=>{
-    try{;
-        db.collection("banner").doc(req.params.id).delete();
+    try{
+        const resp = await db.collection("banners").doc(req.params.id).delete();
+        console.log(resp)
         res.send('Banner record deleted successfuly');
     }catch(err){
         res.send(err)
