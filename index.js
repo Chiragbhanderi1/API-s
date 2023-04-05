@@ -112,7 +112,7 @@ app.post('/banners',async(req,res)=>{
 })
 app.post('/blogs',async(req,res)=>{
     try{
-      const data = {title:req.body.title,details:req.body.details,img:req.body.img};
+      const data = {title:req.body.title,details:req.body.details,img:req.body.img,author:req.body.author};
       const response = await db.collection("blogs").doc().set(data)
         res.send(response)
     }catch(err){
@@ -301,7 +301,9 @@ app.get('/getblogs',async(req,res)=>{
                 const blog = new Blog(
                     doc.id,
                     doc.data().title,
-                    doc.data().subtitle,
+                    doc.data().author,
+                    doc.data().date,
+                    doc.data().details,
                     doc.data().img,
                 );
                 blogArray.push(blog);
