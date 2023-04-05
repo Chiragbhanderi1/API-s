@@ -3,17 +3,32 @@ const app  = express();
 const Course = require('./modals/course');
 const Interships = require('./modals/intership');
 const Event = require('./modals/event');
-const TechnicalBlog = require('./modals/technicalBlog')
+const TechnicalBlog = require('./modals/technicalBlog');
 const User = require('./modals/user');
+const Banner = require('./modals/banner');
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
 const cors = require('cors')
+const nodemailer = require('nodemailer');
 app.use(cors());
 admin.initializeApp({
     credential:admin.credential.cert(credentials),
     storageBucket: 'gs://internship-project-57ed0.appspot.com',
 })
+let transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'cbhanderi666@gmail.com',
+    pass: 'qewybyqsmuzkbwqg'
+  }
+});
+function generateEventId(companyName, eventName) {
+  const companyId = companyName.slice(0, 3).toUpperCase();
+  const eventId = eventName.slice(0, 2).toUpperCase();
+  const randomNumbers = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `${companyId}${eventId}${randomNumbers}`;
+}
 const bucket = admin.storage().bucket();
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -80,6 +95,15 @@ app.post('/technicalblogs',async(req,res)=>{
     try{
       const data = {title:req.body.title,subtitle:req.body.subtitle,date:new Date(),img:req.body.img,details:req.body.details};
       const response = await db.collection("technicalBlog").doc(req.body.title).set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
+app.post('/banners',async(req,res)=>{
+    try{
+      const data = {title:req.body.title,subtitle:req.body.subtitle,img:req.body.img};
+      const response = await db.collection("banners").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
         res.send(err)
@@ -232,6 +256,31 @@ app.get('/gettechnicalblogs',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/getbanners',async(req,res)=>{
+    try{
+        const banners =  db.collection("banners");
+        const data = await banners.get();
+        const bannerArray = [];
+        if(data.empty) {
+            res.status(404).send('No Banner record found');
+        }else {
+            data.forEach(doc => {
+                const banner = new Banner(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle, 
+                    doc.data().date,
+                    doc.data().details,
+                    doc.data().img,
+                );
+                bannerArray.push(banner);
+            });
+            res.send(bannerArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getusers',async(req,res)=>{
     try{
         const users =  db.collection("users").orderBy('created_on','desc');
@@ -323,6 +372,19 @@ app.get('/gettechnicalblog/:id',async(req,res)=>{
       res.send(err)
   }
 })
+app.get('/getbanner/:id',async(req,res)=>{
+  try{
+      const blog =  db.collection("banner").doc(req.params.id);
+      const data = await blog.get();
+      if(!data.exists) {
+          res.status(404).send('No Banner record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
 app.put('/updatecourse/:id',async(req,res)=>{
     try{
         const data = req.body; 
@@ -359,6 +421,16 @@ app.put('/updatetechnicalblog/:id',async(req,res)=>{
         const blog =  db.collection("technicalBlog").doc(req.params.id);
         await blog.update(data);
         res.send('Blog record updated successfuly');
+    }catch(err){
+        res.send(err)
+    }
+})
+app.put('/updatebanner/:id',async(req,res)=>{
+    try{
+        const data = req.body; 
+        const banner =  db.collection("banner").doc(req.params.id);
+        await banner.update(data);
+        res.send('Banner record updated successfuly');
     }catch(err){
         res.send(err)
     }
@@ -401,6 +473,14 @@ app.delete('/deletetechnicalblog/:id',async(req,res)=>{
     try{;
         db.collection("technicalBlog").doc(req.params.id).delete();
         res.send('Blog record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    } 
+})
+app.delete('/deletebanner/:id',async(req,res)=>{
+    try{;
+        db.collection("banner").doc(req.params.id).delete();
+        res.send('Banner record deleted successfuly');
     }catch(err){
         res.send(err)
     } 
@@ -525,8 +605,9 @@ app.post('/subscribedevent/:userId',async (req, res) => {
   const name = req.body.name;
   const email = req.params.userId;
   const contact = req.body.contact;
+  const id = generateEventId("TIH", eventId)
   const { userId } = req.params;
-
+  const eventregis = [userId+"-"+id]
   try {
     // Check if user exists in Firestore
     const userRef = admin.firestore().collection('subscribeevent').doc(userId);
@@ -537,18 +618,49 @@ app.post('/subscribedevent/:userId',async (req, res) => {
     }
     // Get current subscribedCourses array for the user
     const subscribedEvents = userDoc.exists ? userDoc.data().subscribedEvents : [];
-    await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId}) 
+    await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId,registrationId:id}) 
     // Add new courses to subscribedCourses array
     subscribedEvents.push(eventId);
     // Update subscribedCourses array in Firestore
     await userRef.update({ subscribedEvents});
     await db.collection('events').doc(eventId).update({
-      students: admin.firestore.FieldValue.arrayUnion(userId)
+      students: admin.firestore.FieldValue.arrayUnion(eventregis)
     })
     res.status(200).json({ message: 'Subscribed event updated successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'An error occurred while updating subscribed event' });
+  }finally{
+    {
+      
+      let mailOptions = {
+        from: 'cbhanderi666@gmail.com',
+        to: userId,
+        subject: 'Successdfully Registering in event',
+        text:`Dear ${userId}, 
+
+        Thank you for registering for ${eventId}! We are excited to have you join us for this event.
+        
+        Your event ID for ${eventId} is: ${id}
+        
+        Please make sure to bring this ID with you to the event. It will be required for check-in and to access certain parts of the event.
+        
+        If you have any questions or concerns, please feel free to contact us at technoithub@gmail.com.
+        
+        We look forward to seeing you at ${eventId}!
+        
+        Best regards,
+        Techno It Hub`
+      };
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+      
+    }
   }
 });
 app.get('/getsubscribedevents/:userId',async (req, res) => {
