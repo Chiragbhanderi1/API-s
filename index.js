@@ -372,7 +372,7 @@ app.get('/gettechnicalblog/:id',async(req,res)=>{
 })
 app.get('/getbanner/:id',async(req,res)=>{
   try{
-      const blog =  db.collection("banner").doc(req.params.id);
+      const blog =  db.collection("banners").doc(req.params.id);
       const data = await blog.get();
       if(!data.exists) {
           res.status(404).send('No Banner record found');
@@ -426,7 +426,7 @@ app.put('/updatetechnicalblog/:id',async(req,res)=>{
 app.put('/updatebanner/:id',async(req,res)=>{
     try{
         const data = req.body; 
-        const banner =  db.collection("banner").doc(req.params.id);
+        const banner =  db.collection("banners").doc(req.params.id);
         await banner.update(data);
         res.send('Banner record updated successfuly');
     }catch(err){
