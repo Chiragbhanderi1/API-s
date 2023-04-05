@@ -671,7 +671,7 @@ app.post('/subscribedevent/:userId',async (req, res) => {
   const contact = req.body.contact;
   const id = generateEventId("TIH", eventId)
   const { userId } = req.params;
-  const eventregis = [userId+"-"+id]
+  const eventregis = userId+"-"+id;
   try {
     // Check if user exists in Firestore
     const userRef = admin.firestore().collection('subscribeevent').doc(userId);
