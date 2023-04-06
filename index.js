@@ -591,6 +591,14 @@ app.delete('/deleteblog/:id',async(req,res)=>{
         res.send(err)
     } 
 })
+app.delete('/deletecontact/:id',async(req,res)=>{
+    try{
+        await db.collection("contactus").doc(req.params.id).delete();
+        res.send('Contact record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    } 
+})
 app.post('/submittedassignment/:userId',async (req, res) => {
   const userId = req.params.userId;  
   try { 
