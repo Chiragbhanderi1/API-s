@@ -206,7 +206,7 @@ app.get('/getcourses',async(req,res)=>{
         res.send(err)
     }
 })
-app.get('/getcourses/:category',async(req,res)=>{
+app.get('/getcoursescategory/:category',async(req,res)=>{
     try{
         const category = req.params.category;
         const courses =  db.collection("courses").orderBy("created_on",'desc');
