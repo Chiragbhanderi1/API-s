@@ -216,7 +216,7 @@ app.get('/getcourses/:category',async(req,res)=>{
             res.status(404).send('No student record found');
         }else {
             data.forEach(doc => {
-                if(doc.category==category){const course = new Course(
+                if(doc.data().category==category){const course = new Course(
                     doc.id,
                     doc.data().title,
                     doc.data().subtitle,
