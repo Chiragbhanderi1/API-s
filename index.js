@@ -58,6 +58,7 @@ app.post('/courses',async(req,res)=>{
                     duration:req.body.duration,
                     materails:req.body.materails,
                     videos:req.body.videos,
+                    category:req.body.category,
                     img:req.body.img,
                     students:students,
                     created_on:new Date()
@@ -129,7 +130,7 @@ app.post('/contactus',async(req,res)=>{
       client.messages.create({
         to: '+919898660970',
         from: '+14406368399',
-        body: `Name :${data.name},Email : ${data.email},Contact : ${data.contact},message:${data.message}`
+        body: `<br/>Name :${data.name},<br/>Email : ${data.email},<br/>Contact : ${data.contact},<br/>message:${data.message}`
       })
       res.send(response)
     }catch(err){
@@ -190,6 +191,7 @@ app.get('/getcourses',async(req,res)=>{
                     doc.data().details,
                     doc.data().duration,
                     doc.data().benifits,
+                    doc.data().category,
                     doc.data().img,
                     doc.data().materails,
                     doc.data().videos,
@@ -197,6 +199,39 @@ app.get('/getcourses',async(req,res)=>{
                     doc.data().students
                 );
                 coursesArray.push(course);
+            });
+            res.send(coursesArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
+app.get('/getcourses/:category',async(req,res)=>{
+    try{
+        const category = req.params.category;
+        const courses =  db.collection("courses").orderBy("created_on",'desc');
+        const data = await courses.get();
+        const coursesArray = [];
+        if(data.empty) {
+            res.status(404).send('No student record found');
+        }else {
+            data.forEach(doc => {
+                if(doc.category==category){const course = new Course(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle,
+                    doc.data().price, 
+                    doc.data().details,
+                    doc.data().duration,
+                    doc.data().benifits,
+                    doc.data().category,
+                    doc.data().img,
+                    doc.data().materails,
+                    doc.data().videos,
+                    doc.data().assignment,
+                    doc.data().students
+                );
+                coursesArray.push(course);}
             });
             res.send(coursesArray);
         }
