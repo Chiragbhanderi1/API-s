@@ -332,8 +332,8 @@ app.get('/getbanners',async(req,res)=>{
                     doc.id,
                     doc.data().title,
                     doc.data().subtitle,
-                    doc.data().img,
                     doc.data().type,
+                    doc.data().img,
                 );
                 bannerArray.push(banner);
             });
