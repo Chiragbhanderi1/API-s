@@ -107,7 +107,7 @@ app.post('/technicalblogs',async(req,res)=>{
 })
 app.post('/banners',async(req,res)=>{
     try{
-      const data = {title:req.body.title,subtitle:req.body.subtitle,img:req.body.img};
+      const data = {title:req.body.title,subtitle:req.body.subtitle,type:req.body.type,img:req.body.img};
       const response = await db.collection("banners").doc().set(data)
         res.send(response)
     }catch(err){
@@ -333,6 +333,7 @@ app.get('/getbanners',async(req,res)=>{
                     doc.data().title,
                     doc.data().subtitle,
                     doc.data().img,
+                    doc.data().type,
                 );
                 bannerArray.push(banner);
             });
