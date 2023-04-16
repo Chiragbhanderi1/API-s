@@ -390,9 +390,9 @@ app.get('/getachievements',async(req,res)=>{
                 const achievement = new Achievements(
                     doc.id,
                     doc.data().title,
-                    doc.data().author,
-                    doc.data().date,
+                    doc.data().subtitle,
                     doc.data().details,
+                    doc.data().date,
                     doc.data().img,
                 );
                 achievementArray.push(achievement);

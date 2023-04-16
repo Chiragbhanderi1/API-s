@@ -1,9 +1,10 @@
 class Achievements {
-    constructor( id, title, subtitle,details,img ) {
+    constructor( id, title, subtitle,details,date,img ) {
             this.id = id;
             this.title = title;
             this.subtitle = subtitle;
-            this.details = details
+            this.details = details;
+            this.date = date;
             this.img = img;
     }
 }
