@@ -8,6 +8,7 @@ const User = require('./modals/user');
 const Banner = require('./modals/banner');
 const Blog = require("./modals/blog");
 const Contact =require("./modals/contactus");
+const Achievements = require("./modals/achievements")
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
 const multer = require('multer')
@@ -118,6 +119,15 @@ app.post('/blogs',async(req,res)=>{
     try{
       const data = {title:req.body.title,details:req.body.details,img:req.body.img,author:req.body.author};
       const response = await db.collection("blogs").doc().set(data)
+        res.send(response)
+    }catch(err){
+        res.send(err)
+    }
+})
+app.post('/achievements',async(req,res)=>{
+    try{
+      const data = {title:req.body.title,subtitle:req.body.subtitle,details:req.body.details,img:req.body.img,date:req.body.date};
+      const response = await db.collection("achievements").doc().set(data)
         res.send(response)
     }catch(err){
         res.send(err)
@@ -368,6 +378,31 @@ app.get('/getblogs',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/getachievements',async(req,res)=>{
+    try{
+        const achievement =  db.collection("achievements");
+        const data = await achievement.get();
+        const achievementArray = [];
+        if(data.empty) {
+            res.status(404).send('No Achievements record found');
+        }else {
+            data.forEach(doc => {
+                const achievement = new Achievements(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().author,
+                    doc.data().date,
+                    doc.data().details,
+                    doc.data().img,
+                );
+                achievementArray.push(achievement);
+            });
+            res.send(achievementArray);
+        }
+    }catch(err){
+        res.send(err)
+    }
+})
 app.get('/getcontactus',async(req,res)=>{
     try{
         const contact =  db.collection("contactus");
@@ -489,6 +524,19 @@ app.get('/getbanner/:id',async(req,res)=>{
       const data = await blog.get();
       if(!data.exists) {
           res.status(404).send('No Banner record found');
+      }else {
+          res.send(data.data());
+      }
+  }catch(err){
+      res.send(err)
+  }
+})
+app.get('/getachievement/:id',async(req,res)=>{
+  try{
+      const achievement =  db.collection("achievements").doc(req.params.id);
+      const data = await achievement.get();
+      if(!data.exists) {
+          res.status(404).send('No Achievement record found');
       }else {
           res.send(data.data());
       }
@@ -623,6 +671,14 @@ app.delete('/deleteblog/:id',async(req,res)=>{
     try{
         await db.collection("blogs").doc(req.params.id).delete();
         res.send('Blog record deleted successfuly');
+    }catch(err){
+        res.send(err)
+    } 
+})
+app.delete('/deleteachievement/:id',async(req,res)=>{
+    try{
+        await db.collection("achievements").doc(req.params.id).delete();
+        res.send('Achievement record deleted successfuly');
     }catch(err){
         res.send(err)
     } 
