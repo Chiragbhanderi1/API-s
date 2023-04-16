@@ -610,7 +610,7 @@ app.put('/updatebanner/:id',async(req,res)=>{
 app.put('/updateachievement/:id',async(req,res)=>{
     try{
         const data = req.body; 
-        const banner =  db.collection("achievement").doc(req.params.id);
+        const banner =  db.collection("achievements").doc(req.params.id);
         await banner.update(data);
         res.send('Achievemt record updated successfuly');
     }catch(err){
