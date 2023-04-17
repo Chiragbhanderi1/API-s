@@ -3,7 +3,7 @@ class Banner {
             this.id = id;
             this.title = title;
             this.subtitle = subtitle;
-            this.type = type
+            this.type = type;
             this.img = img;
     }
 }

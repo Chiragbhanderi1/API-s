@@ -91,7 +91,7 @@ app.post('/interships',async(req,res)=>{
 app.post('/events',async(req,res)=>{
     try{
       const students=[]
-      const data = {title:req.body.title,subtitle:req.body.subtitle,date:req.body.date,img:req.body.img,details:req.body.details,price:req.body.price,students:students};
+      const data = {title:req.body.title,subtitle:req.body.subtitle,date:req.body.date,img:req.body.img,banner:req.body.banner,details:req.body.details,price:req.body.price,students:students};
       const response = await db.collection("events").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
@@ -296,6 +296,7 @@ app.get('/getevents',async(req,res)=>{
                     doc.data().date,
                     doc.data().details,
                     doc.data().img,
+                    doc.data().banner,
                     doc.data().students
                 );
                 eventArray.push(event);
