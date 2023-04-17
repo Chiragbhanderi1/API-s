@@ -61,6 +61,7 @@ app.post('/courses',async(req,res)=>{
                     videos:req.body.videos,
                     category:req.body.category,
                     img:req.body.img,
+                    banner:req.body.banner,
                     students:students,
                     created_on:new Date()
                   };
@@ -203,6 +204,7 @@ app.get('/getcourses',async(req,res)=>{
                     doc.data().benifits,
                     doc.data().category,
                     doc.data().img,
+                    doc.data().banner,
                     doc.data().materails,
                     doc.data().videos,
                     doc.data().assignment,
