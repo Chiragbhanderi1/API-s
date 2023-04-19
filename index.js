@@ -109,7 +109,7 @@ app.post('/technicalblogs',async(req,res)=>{
 })
 app.post('/banners',async(req,res)=>{
     try{
-      const data = {title:req.body.title,subtitle:req.body.subtitle,type:req.body.type,img:req.body.img};
+      const data = {title:req.body.title,subtitle:req.body.subtitle,type:req.body.type,imgDesk:req.body.imgDesk,imgMob:req.body.imgMob};
       const response = await db.collection("banners").doc().set(data)
         res.send(response)
     }catch(err){
@@ -346,7 +346,8 @@ app.get('/getbanners',async(req,res)=>{
                     doc.data().title,
                     doc.data().subtitle,
                     doc.data().type,
-                    doc.data().img,
+                    doc.data().imgDesk,
+                    doc.data().imgMob,
                 );
                 bannerArray.push(banner);
             });
@@ -775,6 +776,7 @@ app.put('/subscribedcourse/:userId',async (req, res) => {
   const courseId = req.body.courseId; 
   const courses =[courseId+" "+type]
   const { userId } = req.params;
+  const imageId = req.body.courseimage;
   // const { courses } = req.body;
 
   try {
@@ -785,20 +787,24 @@ app.put('/subscribedcourse/:userId',async (req, res) => {
     if (!userDoc.exists) {
       // Create new user document if it does not exist
       await userRef.set({ subscribedCourses: [] });
+      await userRef.set({ courseImage: [] });
     }
 
     // Get current subscribedCourses array for the user
     const subscribedCourses = userDoc.exists ? userDoc.data().subscribedCourses : [];
+    const courseImage = userDoc.exists ? userDoc.data().courseImage : [];
 
     // Add new courses to subscribedCourses array
     courses.forEach(course => {
       if (!subscribedCourses.includes(course)) {
         subscribedCourses.push(course);
+        courseImage.push(imageId);
       }
     });
 
     // Update subscribedCourses array in Firestore
     await userRef.update({ subscribedCourses });
+    await userRef.update({ courseImage });
     await db.collection('courses').doc(courseId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
     })
@@ -821,8 +827,8 @@ app.get('/getsubscribedcourses/:userId',async (req, res) => {
 });  
 app.post('/subscribedevent/:userId',async (req, res) => {
   const eventId = req.body.eventId; 
+  const imageId = req.body.eventimage;
   const name = req.body.name;
-  const email = req.params.userId;
   const contact = req.body.contact;
   const id = generateEventId("TIH", eventId)
   const { userId } = req.params;
@@ -834,14 +840,22 @@ app.post('/subscribedevent/:userId',async (req, res) => {
     if (!userDoc.exists) {
       // Create new user document if it does not exist
       await userRef.set({ subscribedEvents: [] });
+      await userRef.set({eventimage:[]});
+      await userRef.set({registrationId:[]});
     }
     // Get current subscribedCourses array for the user
     const subscribedEvents = userDoc.exists ? userDoc.data().subscribedEvents : [];
-    await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId,registrationId:id}) 
+    const eventImage = userDoc.exists ? userDoc.data().eventImage : [];
+    const registrationId = userDoc.exists ? userDoc.data().registrationId : [];
+    await db.collection('subscribeevent').doc(userId).set({name:name,contact:contact,email:userId}) 
     // Add new courses to subscribedCourses array
     subscribedEvents.push(eventId);
+    eventImage.push(imageId);
+    registrationId.push(id)
     // Update subscribedCourses array in Firestore
     await userRef.update({ subscribedEvents});
+    await userRef.update({ eventImage});
+    await userRef.update({ registrationId});
     await db.collection('events').doc(eventId).update({
       students: admin.firestore.FieldValue.arrayUnion(eventregis)
     })

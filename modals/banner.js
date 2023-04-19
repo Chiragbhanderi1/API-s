@@ -1,10 +1,11 @@
 class Banner {
-    constructor( id, title, subtitle,type,img ) {
+    constructor( id, title, subtitle,type,imgDesk,imgMob ) {
             this.id = id;
             this.title = title;
             this.subtitle = subtitle;
             this.type = type;
-            this.img = img;
+            this.imgDesk = imgDesk;
+            this.imgMob = imgMob;
     }
 }
 
