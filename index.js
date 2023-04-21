@@ -45,6 +45,35 @@ const db =  admin.firestore();
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
+app.post('/trycourses',async(req,res)=>{
+  try {
+      // Create a new course document in the "courses" collection
+      const courseData = {
+        title:req.body.title,
+        details:req.body.details,
+        img:req.body.img
+      };
+      const courseRef = db.collection("courses1").doc(req.body.title);
+      await courseRef.set(courseData);
+      // Get the subcollection data from the request body
+      const  videos =req.body.videos;
+      const  assignments =req.body.assignments;
+      const  materials =req.body.materials;
+      // Add documents to the videos subcollection
+      const videosRef = courseRef.collection("videos");
+      const videoRef = await videosRef.add(videos);
+      // Add documents to the assignments subcollection
+      const assignmentsRef = courseRef.collection("assignments");
+        const assignmentRef = await assignmentsRef.add(assignments);
+      // Add documents to the materials subcollection
+      const materialsRef = courseRef.collection("materials");
+        const materialRef = await materialsRef.add(materials);
+      
+      res.send("success")
+  } catch (error) {
+    res.send(error)
+  }
+})
 app.post('/courses',async(req,res)=>{
     try{
       const students=[]
@@ -183,6 +212,98 @@ app.post('/users',async(req,res)=>{
     }catch(err){
         res.send(err)
     }
+})
+
+app.get('/gettrycourses',async(req,res)=>{
+  try {
+    const courses =  db.collection("courses1");
+        const data = await courses.get();
+        const coursesArray = [];
+        if(data.empty) {
+          res.status(404).send('No student record found');
+        }else {
+          data.forEach(doc => {
+              const documentRef = db.collection('courses1').doc(doc.id);
+              // Get a reference to a subcollection of the document
+              const subcollectionRef = documentRef.collection('videos');
+              async function getVideoDataFromSubcollection() {
+                try {
+                  const videoData =[];
+                  const querySnapshot = await subcollectionRef.get();
+                  querySnapshot.forEach((doc) => {
+                    const myObject=doc.data();
+                    myObject.id = doc.id;
+                    videoData.push(myObject);
+                  });
+                  return videoData;
+                } catch (error) {
+                  console.error(error);
+                }
+              }
+              const subcollectionRefass = documentRef.collection('assignments');
+              async function getAssDataFromSubcollection() {
+                try {
+                  const assignmentData =[];
+                  const querySnapshot = await subcollectionRefass.get();
+                  querySnapshot.forEach((doc) => {
+                    const myObject=doc.data();
+                    myObject.id = doc.id;
+                    assignmentData.push(myObject);
+                  });
+                  return assignmentData;
+                } catch (error) {
+                  console.error(error);
+                }
+              }
+              const subcollectionRefmat = documentRef.collection('materials');
+              async function getMatDataFromSubcollection() {
+                try {
+                  const materailData =[];
+                  const querySnapshot = await subcollectionRefmat.get();
+                  querySnapshot.forEach((doc) => {
+                    const myObject=doc.data();
+                    myObject.id = doc.id;
+                    materailData.push(myObject);
+                  });
+                  return materailData;
+                } catch (error) {
+                  console.error(error);
+                }
+              }
+              async function transformData() {
+                try {
+                  const videoData = await getVideoDataFromSubcollection();
+                  const materailData = await getMatDataFromSubcollection();
+                  const assignmentData = await getAssDataFromSubcollection();
+                  const course = new Course(
+                    doc.id,
+                    doc.data().title,
+                    doc.data().subtitle,
+                    doc.data().price, 
+                    doc.data().details,
+                    doc.data().duration,
+                    doc.data().benifits,
+                    doc.data().category,
+                    doc.data().img,
+                    doc.data().banner,
+                    materailData,
+                    videoData,
+                    assignmentData,
+                    doc.data().students
+                );
+                coursesArray.push(course);
+                res.send(coursesArray);
+                } catch (error) {
+                  console.error(error);
+                } 
+              }
+              
+              transformData();
+            });
+        }
+  } catch (error) {
+    res.send(error)
+  }
 })
 
 app.get('/getcourses',async(req,res)=>{
@@ -457,6 +578,96 @@ app.get('/getusers',async(req,res)=>{
         res.send(err)
     }
 })
+app.get('/gettrycourse/:id',async(req,res)=>{
+  const id = req.params.id;
+  try {
+    const documentRef = db.collection('courses1').doc(id);
+    // Get a reference to a subcollection of the document
+    const subcollectionRef = documentRef.collection('videos');
+    async function getVideoDataFromSubcollection() {
+      try {
+        const videoData =[];
+        const querySnapshot = await subcollectionRef.get();
+        querySnapshot.forEach((doc) => {
+          const myObject=doc.data();
+          myObject.id = doc.id;
+          videoData.push(myObject);
+        });
+        return videoData;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    const subcollectionRefass = documentRef.collection('assignments');
+    async function getAssDataFromSubcollection() {
+      try {
+        const assignmentData =[];
+        const querySnapshot = await subcollectionRefass.get();
+        querySnapshot.forEach((doc) => {
+          const myObject=doc.data();
+          myObject.id = doc.id;
+          assignmentData.push(myObject);
+        });
+        return assignmentData;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    const subcollectionRefmat = documentRef.collection('materials');
+    async function getMatDataFromSubcollection() {
+      try {
+        const materailData =[];
+        const querySnapshot = await subcollectionRefmat.get();
+        querySnapshot.forEach((doc) => {
+          const myObject=doc.data();
+          myObject.id = doc.id;
+          materailData.push(myObject);
+        });
+        return materailData;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    async function transformData() {
+      try {
+        const data = {};
+        const videoData = await getVideoDataFromSubcollection();
+        const materailData = await getMatDataFromSubcollection();
+        const assignmentData = await getAssDataFromSubcollection();
+        const courseById =  db.collection("courses1").doc(req.params.id);
+        const temp = await courseById.get();
+        if(!temp.exists) {
+          res.status(404).send('No course record found');
+        }else {
+          const course = new Course(
+            temp.id,
+            temp.data().title,
+            temp.data().subtitle,
+            temp.data().price, 
+            temp.data().details,
+            temp.data().duration,
+            temp.data().benifits,
+            temp.data().category,
+            temp.data().img,
+            temp.data().banner,
+            materailData,
+            videoData,
+            assignmentData,
+            temp.data().students
+        );
+          res.send(course);
+        }
+        // data.push(temp.data());
+        // res.send(data);
+      } catch (error) {
+        console.error(error);
+      } 
+    }
+    transformData();
+  } catch (error) {
+    res.send(error)
+  }
+})
 app.get('/getcourse/:id',async(req,res)=>{
     try{
         const courseById =  db.collection("courses").doc(req.params.id);
@@ -641,6 +852,37 @@ app.put('/updateuser/:id',async(req,res)=>{
         res.send(err)
     }
 })
+app.put('/updatetrycourse/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+  const collectionId = req.params.collectionId;
+  const subcollectionId = req.params.subcollectionId;
+  const documentId = req.params.documentId;
+  const data = req.body; // Updated data for the document
+
+  try {
+    const collectionRef = admin.firestore().collection('courses1');
+    const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
+    await subcollectionRef.doc(documentId).update(data); // Update the specific document in the subcollection
+    res.status(200).send('Document updated successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error updating document');
+  }
+});
+app.delete('/deletetrycourse/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+  const collectionId = req.params.collectionId;
+  const subcollectionId = req.params.subcollectionId;
+  const documentId = req.params.documentId;
+  try {
+    const collectionRef = admin.firestore().collection("courses1");
+    const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
+    await subcollectionRef.doc(documentId).delete(); // Delete the specific document in the subcollection
+    res.status(200).send('Document deleted successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error deleting document');
+  }
+});
+
 app.delete('/deletecourse/:id',async(req,res)=>{
     try{
         await db.collection("courses").doc(req.params.id).delete();
