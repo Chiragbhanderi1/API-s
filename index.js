@@ -47,11 +47,20 @@ app.use(express.urlencoded({extended:true}))
 
 app.post('/trycourses',async(req,res)=>{
   try {
+    const students=[]
       // Create a new course document in the "courses" collection
       const courseData = {
-        title:req.body.title,
-        details:req.body.details,
-        img:req.body.img
+                    title:req.body.title,
+                    price:req.body.price, 
+                    subtitle:req.body.subtitle,
+                    details:req.body.details,
+                    benifits:req.body.benifits,
+                    duration:req.body.duration,
+                    category:req.body.category,
+                    img:req.body.img,
+                    banner:req.body.banner,
+                    students:students,
+                    created_on:new Date()
       };
       const courseRef = db.collection("courses1").doc(req.body.title);
       await courseRef.set(courseData);
@@ -61,13 +70,21 @@ app.post('/trycourses',async(req,res)=>{
       const  materials =req.body.materials;
       // Add documents to the videos subcollection
       const videosRef = courseRef.collection("videos");
-      const videoRef = await videosRef.add(videos);
+      console.log("theek")
+      for(let i = 0; i < videos.length; i++){
+        console.log(videos[i])
+        const videoRef = await videosRef.add(videos[i]);
+      }
       // Add documents to the assignments subcollection
       const assignmentsRef = courseRef.collection("assignments");
-        const assignmentRef = await assignmentsRef.add(assignments);
+      for(let i = 0; i < assignments.length; i++){
+        const assignmentRef = await assignmentsRef.add(assignments[i]);
+      }
       // Add documents to the materials subcollection
       const materialsRef = courseRef.collection("materials");
-        const materialRef = await materialsRef.add(materials);
+      for(let i = 0; i < materials.length; i++){
+        const materialRef = await materialsRef.add(materials[i]);
+      }
       
       res.send("success")
   } catch (error) {
