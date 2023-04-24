@@ -233,16 +233,13 @@ app.post('/users',async(req,res)=>{
 app.get('/gettrycourses',async(req,res)=>{
   const coursesRef = db.collection('courses1');
   try {
-    const coursesData = [];
-
-    // Query the "courses" collection
-    const coursesSnapshot = await coursesRef.get();
-
-    // Iterate through each course document
-    const coursePromises = coursesSnapshot.docs.map(async (courseDoc) => {
+      const coursesData = [];
+      // Query the "courses" collection
+      const coursesSnapshot = await coursesRef.get();
+      // Iterate through each course document
+      const coursePromises = coursesSnapshot.docs.map(async (courseDoc) => {
       // Get data from the course document
       const courseData = courseDoc.data();
-
       // Query the "videos" subcollection for this course
       const videosSnapshot = await courseDoc.ref.collection('videos').get();
       // Add video data to the course data object
@@ -257,16 +254,13 @@ app.get('/gettrycourses',async(req,res)=>{
       materailsSnapshot.forEach((matDoc) => {
         courseData.materials.push(matDoc.data());
       });
-
       // Query the "assignments" subcollection for this course
       const assignmentsSnapshot = await courseDoc.ref.collection('assignments').get();
-
       // Add assignment data to the course data object
       courseData.assignments = [];
       assignmentsSnapshot.forEach((assignmentDoc) => {
         courseData.assignments.push(assignmentDoc.data());
       });
-
       // Add the course data to the response array
       coursesData.push(courseData);
     });
@@ -554,91 +548,28 @@ app.get('/getusers',async(req,res)=>{
     }
 })
 app.get('/gettrycourse/:id',async(req,res)=>{
-  const id = req.params.id;
   try {
-    const documentRef = db.collection('courses1').doc(id);
-    // Get a reference to a subcollection of the document
-    const subcollectionRef = documentRef.collection('videos');
-    async function getVideoDataFromSubcollection() {
-      try {
-        const videoData =[];
-        const querySnapshot = await subcollectionRef.get();
-        querySnapshot.forEach((doc) => {
-          const myObject=doc.data();
-          myObject.id = doc.id;
-          videoData.push(myObject);
-        });
-        return videoData;
-      } catch (error) {
-        console.error(error);
-      }
+    const coursesRef = db.collection('courses1');
+    const courseId = req.params.id;
+    const courseDoc = await coursesRef.doc(courseId).get();
+    if (!courseDoc.exists) {
+      return res.status(404).json({ error: 'Course not found' });
     }
-    const subcollectionRefass = documentRef.collection('assignments');
-    async function getAssDataFromSubcollection() {
-      try {
-        const assignmentData =[];
-        const querySnapshot = await subcollectionRefass.get();
-        querySnapshot.forEach((doc) => {
-          const myObject=doc.data();
-          myObject.id = doc.id;
-          assignmentData.push(myObject);
-        });
-        return assignmentData;
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    const subcollectionRefmat = documentRef.collection('materials');
-    async function getMatDataFromSubcollection() {
-      try {
-        const materailData =[];
-        const querySnapshot = await subcollectionRefmat.get();
-        querySnapshot.forEach((doc) => {
-          const myObject=doc.data();
-          myObject.id = doc.id;
-          materailData.push(myObject);
-        });
-        return materailData;
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    async function transformData() {
-      try {
-        const data = {};
-        const videoData = await getVideoDataFromSubcollection();
-        const materailData = await getMatDataFromSubcollection();
-        const assignmentData = await getAssDataFromSubcollection();
-        const courseById =  db.collection("courses1").doc(req.params.id);
-        const temp = await courseById.get();
-        if(!temp.exists) {
-          res.status(404).send('No course record found');
-        }else {
-          const course = new Course(
-            temp.id,
-            temp.data().title,
-            temp.data().subtitle,
-            temp.data().price, 
-            temp.data().details,
-            temp.data().duration,
-            temp.data().benifits,
-            temp.data().category,
-            temp.data().img,
-            temp.data().banner,
-            materailData,
-            videoData,
-            assignmentData,
-            temp.data().students
-        );
-          res.send(course);
-        }
-        // data.push(temp.data());
-        // res.send(data);
-      } catch (error) {
-        console.error(error);
-      } 
-    }
-    transformData();
+    const courseData = courseDoc.data();
+    // Add sub-collections data to courseData
+        // Get sub-collection data and add it to courseData
+        const videosSnap = await courseDoc.ref.collection('videos').get();
+        const videosData = videosSnap.docs.map(doc => doc.data());
+        courseData.videos = videosData;
+    
+        const assignmentsSnap = await courseDoc.ref.collection('assignments').get();
+        const assignmentsData = assignmentsSnap.docs.map(doc => doc.data());
+        courseData.assignments = assignmentsData;
+    
+        const materialsSnap = await courseDoc.ref.collection('materials').get();
+        const materialsData = materialsSnap.docs.map(doc => doc.data());
+        courseData.materials = materialsData;
+    res.json(courseData);
   } catch (error) {
     res.send(error)
   }
