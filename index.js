@@ -513,15 +513,29 @@ app.get('/getcourse/:id',async(req,res)=>{
     // Add sub-collections data to courseData
         // Get sub-collection data and add it to courseData
         const videosSnap = await courseDoc.ref.collection('videos').get();
-        const videosData = videosSnap.docs.map(doc => doc.data());
+        const videosData = videosSnap.docs.map(doc => {
+          return {
+            id: doc.id,
+            ...doc.data()
+          };
+        });
         courseData.videos = videosData;
     
         const assignmentsSnap = await courseDoc.ref.collection('assignments').get();
-        const assignmentsData = assignmentsSnap.docs.map(doc => doc.data());
+        const assignmentsData = assignmentsSnap.docs.map(doc => {
+          return {
+          id: doc.id,
+          ...doc.data()
+        };});
         courseData.assignments = assignmentsData;
     
         const materialsSnap = await courseDoc.ref.collection('materials').get();
-        const materialsData = materialsSnap.docs.map(doc => doc.data());
+        const materialsData = materialsSnap.docs.map(doc => {
+          return {
+            id: doc.id,
+            ...doc.data()
+          };
+        });
         courseData.materials = materialsData;
     res.json(courseData);
   } catch (error) {
