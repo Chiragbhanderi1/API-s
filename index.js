@@ -45,7 +45,7 @@ const db =  admin.firestore();
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
-app.post('/trycourses',async(req,res)=>{
+app.post('/courses',async(req,res)=>{
   try {
     const students=[]
       // Create a new course document in the "courses" collection
@@ -62,7 +62,7 @@ app.post('/trycourses',async(req,res)=>{
                     students:students,
                     created_on:new Date()
       };
-      const courseRef = db.collection("courses1").doc(req.body.title);
+      const courseRef = db.collection("courses").doc(req.body.title);
       await courseRef.set(courseData);
       // Get the subcollection data from the request body
       const  videos =req.body.videos;
@@ -71,7 +71,6 @@ app.post('/trycourses',async(req,res)=>{
       // Add documents to the videos subcollection
       const videosRef = courseRef.collection("videos");
       for(let i = 0; i < videos.length; i++){
-        console.log(videos[i])
         const videoRef = await videosRef.add(videos[i]);
       }
       // Add documents to the assignments subcollection
@@ -89,32 +88,6 @@ app.post('/trycourses',async(req,res)=>{
   } catch (error) {
     res.send(error)
   }
-})
-app.post('/courses',async(req,res)=>{
-    try{
-      const students=[]
-      const data = {
-                    title:req.body.title,
-                    price:req.body.price,
-                    subtitle:req.body.subtitle,
-                    details:req.body.details,
-                    benifits:req.body.benifits,
-                    videos:req.body.videos,
-                    assignments:req.body.assignments,
-                    duration:req.body.duration,
-                    materails:req.body.materails,
-                    videos:req.body.videos,
-                    category:req.body.category,
-                    img:req.body.img,
-                    banner:req.body.banner,
-                    students:students,
-                    created_on:new Date()
-                  };
-      const response = await db.collection("courses").doc(req.body.title).set(data)
-        res.send(response)
-    }catch(err){
-        res.send(err)
-    }
 })
 app.post('/interships',async(req,res)=>{
     try{
@@ -230,8 +203,8 @@ app.post('/users',async(req,res)=>{
     }
 })
 
-app.get('/gettrycourses',async(req,res)=>{
-  const coursesRef = db.collection('courses1');
+app.get('/getcourses',async(req,res)=>{
+  const coursesRef = db.collection('courses');
   try {
       const coursesData = [];
       // Query the "courses" collection
@@ -274,72 +247,53 @@ app.get('/gettrycourses',async(req,res)=>{
     res.status(500).send('Error retrieving courses');
   }
 })
-
-app.get('/getcourses',async(req,res)=>{
-    try{
-        const courses =  db.collection("courses").orderBy("created_on",'desc');
-        const data = await courses.get();
-        const coursesArray = [];
-        if(data.empty) {
-            res.status(404).send('No student record found');
-        }else {
-            data.forEach(doc => {
-                const course = new Course(
-                    doc.id,
-                    doc.data().title,
-                    doc.data().subtitle,
-                    doc.data().price, 
-                    doc.data().details,
-                    doc.data().duration,
-                    doc.data().benifits,
-                    doc.data().category,
-                    doc.data().img,
-                    doc.data().banner,
-                    doc.data().materails,
-                    doc.data().videos,
-                    doc.data().assignment,
-                    doc.data().students
-                );
-                coursesArray.push(course);
-            });
-            res.send(coursesArray);
-        }
-    }catch(err){
-        res.send(err)
-    }
-})
 app.get('/getcoursescategory/:category',async(req,res)=>{
-    try{
-        const category = req.params.category;
-        const courses =  db.collection("courses").orderBy("created_on",'desc');
-        const data = await courses.get();
-        const coursesArray = [];
-        if(data.empty) {
-            res.status(404).send('No student record found');
-        }else {
-            data.forEach(doc => {
-                if(doc.data().category==category){const course = new Course(
-                    doc.id,
-                    doc.data().title,
-                    doc.data().subtitle,
-                    doc.data().price, 
-                    doc.data().details,
-                    doc.data().duration,
-                    doc.data().benifits,
-                    doc.data().category,
-                    doc.data().img,
-                    doc.data().materails,
-                    doc.data().videos,
-                    doc.data().assignment,
-                    doc.data().students
-                );
-                coursesArray.push(course);}
-            });
-            res.send(coursesArray);
-        }
-    }catch(err){
-        res.send(err)
+  const coursesRef = db.collection('courses');
+  const category = req.params.category;
+  try {
+      const coursesData = [];
+      // Query the "courses" collection
+      const coursesSnapshot = await coursesRef.get();
+      // Iterate through each course document
+      const coursePromises = coursesSnapshot.docs.map(async (courseDoc) => {
+      // Get data from the course document
+      const courseData = courseDoc.data();
+      // Query the "videos" subcollection for this course
+      if(courseData.category===category){
+
+        const videosSnapshot = await courseDoc.ref.collection('videos').get();
+        // Add video data to the course data object
+        courseData.videos = [];
+        videosSnapshot.forEach((videoDoc) => {
+          courseData.videos.push(videoDoc.data());
+        });
+        // Query the "videos" subcollection for this course
+        const materailsSnapshot = await courseDoc.ref.collection('materials').get();
+        // Add video data to the course data object
+        courseData.materials = [];
+        materailsSnapshot.forEach((matDoc) => {
+          courseData.materials.push(matDoc.data());
+        });
+      // Query the "assignments" subcollection for this course
+      const assignmentsSnapshot = await courseDoc.ref.collection('assignments').get();
+      // Add assignment data to the course data object
+      courseData.assignments = [];
+      assignmentsSnapshot.forEach((assignmentDoc) => {
+        courseData.assignments.push(assignmentDoc.data());
+      });
+      // Add the course data to the response array
+      coursesData.push(courseData);
     }
+    });
+
+    await Promise.all(coursePromises);
+    // Send the course data in the response
+    res.status(200).send(coursesData);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error retrieving courses');
+  }
 })
 app.get('/getinterships',async(req,res)=>{
     try{
@@ -547,9 +501,9 @@ app.get('/getusers',async(req,res)=>{
         res.send(err)
     }
 })
-app.get('/gettrycourse/:id',async(req,res)=>{
+app.get('/getcourse/:id',async(req,res)=>{
   try {
-    const coursesRef = db.collection('courses1');
+    const coursesRef = db.collection('courses');
     const courseId = req.params.id;
     const courseDoc = await coursesRef.doc(courseId).get();
     if (!courseDoc.exists) {
@@ -573,19 +527,6 @@ app.get('/gettrycourse/:id',async(req,res)=>{
   } catch (error) {
     res.send(error)
   }
-})
-app.get('/getcourse/:id',async(req,res)=>{
-    try{
-        const courseById =  db.collection("courses").doc(req.params.id);
-        const data = await courseById.get();
-        if(!data.exists) {
-            res.status(404).send('No course record found');
-        }else {
-            res.send(data.data());
-        }
-    }catch(err){
-        res.send(err)
-    }
 })
 app.get('/getuser/:id',async(req,res)=>{
   try{
@@ -680,7 +621,7 @@ app.get('/getblog/:id',async(req,res)=>{
 })
 app.put('/updatecourse/:id',async(req,res)=>{
     try{
-        const data = req.body; 
+        const data = req.body;   
         const course =  db.collection("courses").doc(req.params.id);
         await course.update(data);
         res.send('course record updated successfuly');
@@ -758,14 +699,14 @@ app.put('/updateuser/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.put('/updatetrycourse/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+app.put('/updatecoursedata/:collectionId/:subcollectionId/:documentId', async (req, res) => {
   const collectionId = req.params.collectionId;
   const subcollectionId = req.params.subcollectionId;
   const documentId = req.params.documentId;
   const data = req.body; // Updated data for the document
 
   try {
-    const collectionRef = admin.firestore().collection('courses1');
+    const collectionRef = admin.firestore().collection('courses');
     const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
     await subcollectionRef.doc(documentId).update(data); // Update the specific document in the subcollection
     res.status(200).send('Document updated successfully');
@@ -774,12 +715,12 @@ app.put('/updatetrycourse/:collectionId/:subcollectionId/:documentId', async (re
     res.status(500).send('Error updating document');
   }
 });
-app.delete('/deletetrycourse/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+app.delete('/deletecoursedata/:collectionId/:subcollectionId/:documentId', async (req, res) => {
   const collectionId = req.params.collectionId;
   const subcollectionId = req.params.subcollectionId;
   const documentId = req.params.documentId;
   try {
-    const collectionRef = admin.firestore().collection("courses1");
+    const collectionRef = admin.firestore().collection("courses");
     const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
     await subcollectionRef.doc(documentId).delete(); // Delete the specific document in the subcollection
     res.status(200).send('Document deleted successfully');
