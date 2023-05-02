@@ -84,10 +84,23 @@ app.post('/courses',async(req,res)=>{
         const materialRef = await materialsRef.add(materials[i]);
       }
       
-      res.send("success")
+      res.send("success") 
   } catch (error) {
     res.send(error)
   }
+})
+app.post('/addcoursedata/:collectionId/:subcollectionId',async(req,res)=>{
+  const subcollection = req.params.subcollectionId;
+  const data = req.body;
+  const courseRef = db.collection('courses').doc(req.params.collectionId);
+  const postRef = courseRef.collection(subcollection);
+  postRef.add(data)
+    .then(() => {
+      res.send('Post added successfully');
+    })
+    .catch((error) => {
+      res.send(error);
+    });
 })
 app.post('/interships',async(req,res)=>{
     try{
@@ -202,7 +215,6 @@ app.post('/users',async(req,res)=>{
         res.send(err)
     }
 })
-
 app.get('/getcourses',async(req,res)=>{
   const coursesRef = db.collection('courses');
   try {
@@ -635,10 +647,10 @@ app.get('/getblog/:id',async(req,res)=>{
 })
 app.put('/updatecourse/:id',async(req,res)=>{
     try{
-        const data = req.body;   
-        const course =  db.collection("courses").doc(req.params.id);
-        await course.update(data);
-        res.send('course record updated successfuly');
+      const data = req.body;  
+      const course =  db.collection("courses").doc(req.params.id);
+      await course.update(data);
+      res.send('course record updated successfuly');
     }catch(err){
         res.send(err)
     }
@@ -718,7 +730,6 @@ app.put('/updatecoursedata/:collectionId/:subcollectionId/:documentId', async (r
   const subcollectionId = req.params.subcollectionId;
   const documentId = req.params.documentId;
   const data = req.body; // Updated data for the document
-
   try {
     const collectionRef = admin.firestore().collection('courses');
     const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
