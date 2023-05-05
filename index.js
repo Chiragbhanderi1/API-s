@@ -167,7 +167,7 @@ app.post('/achievements',async(req,res)=>{
 })
 app.post('/contactus',async(req,res)=>{
     try{
-      const data = {name:req.body.name,email:req.body.email,message:req.body.message,contact:req.body.contact};
+      const data = {name:req.body.name,email:req.body.email,message:req.body.message,contact:req.body.contact,created_on:new Date()};
       const response = await db.collection("contactus").doc().set(data)
       client.messages.create({
         to: '+919898660970',
@@ -754,10 +754,27 @@ app.delete('/deletecoursedata/:collectionId/:subcollectionId/:documentId', async
     res.status(500).send('Error deleting document');
   }
 });
-
 app.delete('/deletecourse/:id',async(req,res)=>{
     try{
         await db.collection("courses").doc(req.params.id).delete();
+        const myCollection = db.collection("subscribecourse");
+        // Query all documents in the collection
+        myCollection.get().then((querySnapshot) => {
+          // Iterate over each document in the collection
+          querySnapshot.forEach((doc) => {
+            const myArray = doc.data().subscribedCourses;
+            const myImageArray = doc.data().courseImage;
+            const removedElements = myArray.filter((element) => !element.includes(req.params.id));
+            const index = myArray
+                .map((element, index) => (element.includes(req.params.id) ? index : -1))
+                .filter((index) => index !== -1);
+            if (index.length == 1) {
+              myImageArray.splice(index[0], 1);
+            }
+            myCollection.doc(doc.id).update({courseImage:myImageArray,subscribedCourses: removedElements });
+          });
+        });
+        
         res.send('course record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -766,6 +783,16 @@ app.delete('/deletecourse/:id',async(req,res)=>{
 app.delete('/deleteintership/:id',async(req,res)=>{
     try{
         await db.collection("interships").doc(req.params.id).delete();
+        const myCollection = db.collection("subscribeintership");
+        // Query all documents in the collection
+        myCollection.get().then((querySnapshot) => {
+          // Iterate over each document in the collection
+          querySnapshot.forEach((doc) => {
+            const myArray = doc.data().subscribedInterships;            
+            const removedElements = myArray.filter((element) => !element.includes(req.params.id));
+            myCollection.doc(doc.id).update({subscribedInterships: removedElements });
+          });
+        });
         res.send('internship record deleted successfuly');
     }catch(err){
         res.send(err)
@@ -774,6 +801,25 @@ app.delete('/deleteintership/:id',async(req,res)=>{
 app.delete('/deleteevent/:id',async(req,res)=>{
     try{
         await db.collection("events").doc(req.params.id).delete();
+        const myCollection = db.collection("subscribeevent");
+        // Query all documents in the collection
+        myCollection.get().then((querySnapshot) => {
+          // Iterate over each document in the collection
+          querySnapshot.forEach((doc) => {
+            const myArray = doc.data().subscribedEvents;
+            const myImageArray = doc.data().eventImage;
+            const myIdArray = doc.data().registrationId;
+            const removedElements = myArray.filter((element) => !element.includes(req.params.id));
+            const index = myArray
+                .map((element, index) => (element.includes(req.params.id) ? index : -1))
+                .filter((index) => index !== -1);
+            if (index.length == 1) {
+              myImageArray.splice(index[0], 1);
+              myIdArray.splice(index[0], 1);
+            }
+            myCollection.doc(doc.id).update({eventImage:myImageArray,subscribedEvents: removedElements,registrationId:myIdArray });
+          });
+        });
         res.send('event record deleted successfuly');
     }catch(err){
         res.send(err)
