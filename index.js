@@ -15,6 +15,7 @@ const multer = require('multer')
 const twilio = require('twilio');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+var CryptoJS = require('crypto-js')
 const client = twilio("AC5379cc509dd22a03dec92142cb441d5d","2c8f13abd180ca6d8849fc5fd3fda461");
 app.use(cors());
 admin.initializeApp({
@@ -45,6 +46,84 @@ const db =  admin.firestore();
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
+// Admin Account system starts here
+app.post('/adminsignup',async(req,res)=>{
+  try{
+      const users =  db.collection("admin");
+      const getdata = await users.get();
+      if(!getdata.empty) {
+        getdata.forEach(doc => {
+          if (doc.id===req.body.username) {
+            res.status(400).send("Username already exists");
+            return
+          }
+        });
+      }
+    const data = {name:req.body.name,username:req.body.username,password:CryptoJS.AES.encrypt(req.body.password,"techoithubAdmin").toString()};
+    const response = await db.collection("admin").doc(req.body.username).set(data)
+    if (response) {
+      res.status(200).send(response)
+    }else{
+      res.status(400).send("Internal Error Ocurred")
+    }
+  }catch(err){
+      res.send(err)
+  }
+})
+app.post('/adminlogin',async(req,res)=>{
+  try{
+    const username = req.body.username;
+    const userById =  db.collection("admin").doc(username);
+    const data = await userById.get();    
+    if(!data.exists) {
+          res.status(404).send('Invalid Credentials');
+    }else {
+        const bytes  = CryptoJS.AES.decrypt(data.data().password,"techoithubAdmin");
+        let decryptPass = bytes.toString(CryptoJS.enc.Utf8);
+        if (decryptPass === req.body.password) {
+          res.status(200).send("Loggedin Successfully");
+          return
+        }
+        else{
+          res.status(400).send("Incorrect Password");
+        }
+    }
+  }catch(err){ 
+      res.send(err)
+  }
+})
+app.put('/adminforget',async(req,res)=>{
+  try{
+    const username = req.body.username;
+    const userById =  db.collection("admin").doc(username);
+    const data = await userById.get();    
+    if(!data.exists) {
+          res.status(404).send('User does not exits');
+    }else {
+      const response = await db.collection("admin").doc(req.body.username).update({password:CryptoJS.AES.encrypt(req.body.password,"techoithubAdmin").toString()})
+      if (response) {
+        res.status(200).send(response)
+      }else{
+        res.status(400).send("Internal Error Ocurred")
+      }
+    }
+  }catch(err){ 
+      res.send(err)
+  }
+});
+app.delete('/admindelete/:id',async(req,res)=>{
+  try{
+    const response = await db.collection("admin").doc(req.params.id).delete();
+    if (response){
+      res.status(200).send('Admin  deleted successfuly');      
+    }else{
+      res.status(400).send("Internal Error")
+    }
+  }catch(err){
+      res.send(err)
+  } 
+})
+// Admin Account system ends here
 app.post('/courses',async(req,res)=>{
   try {
     const students=[]
