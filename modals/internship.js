@@ -1,4 +1,4 @@
-class Intership {
+class Internship {
     constructor(id, title, subtitle, details,perks,price,img,students ) {
             this.id = id;
             this.title = title;
@@ -11,4 +11,4 @@ class Intership {
     }
 }
 
-module.exports = Intership;
+module.exports = Internship;

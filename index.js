@@ -1,7 +1,7 @@
 const express = require('express');
 const app  = express();
 const Course = require('./modals/course');
-const Interships = require('./modals/intership');
+const Internships = require('./modals/internship');
 const Event = require('./modals/event');
 const TechnicalBlog = require('./modals/technicalBlog');
 const User = require('./modals/user');
@@ -54,7 +54,7 @@ app.post('/courses',async(req,res)=>{
                     price:req.body.price, 
                     subtitle:req.body.subtitle,
                     details:req.body.details,
-                    benifits:req.body.benifits,
+                    benefits:req.body.benefits,
                     duration:req.body.duration,
                     category:req.body.category,
                     img:req.body.img,
@@ -102,7 +102,7 @@ app.post('/addcoursedata/:collectionId/:subcollectionId',async(req,res)=>{
       res.send(error);
     });
 })
-app.post('/interships',async(req,res)=>{
+app.post('/internships',async(req,res)=>{
     try{
       const students=[]
       const data = {title:req.body.title,
@@ -113,7 +113,7 @@ app.post('/interships',async(req,res)=>{
                     students:students,
                     created_on:new Date()
                   };
-      const response = await db.collection("interships").doc(req.body.title).set(data)
+      const response = await db.collection("internships").doc(req.body.title).set(data)
         res.send(response)
     }catch(err){
         res.send(err)
@@ -307,16 +307,16 @@ app.get('/getcoursescategory/:category',async(req,res)=>{
     res.status(500).send('Error retrieving courses');
   }
 })
-app.get('/getinterships',async(req,res)=>{
+app.get('/getinternships',async(req,res)=>{
     try{
-        const interships =  db.collection("interships").orderBy("created_on",'desc');
-        const data = await interships.get();
-        const intershipsArray = [];
+        const internships =  db.collection("internships").orderBy("created_on",'desc');
+        const data = await internships.get();
+        const internshipsArray = [];
         if(data.empty) {
             res.status(404).send('No internship record found');
         }else {
             data.forEach(doc => {
-                const intership = new Interships(
+                const internship = new Internships(
                     doc.id,
                     doc.data().title,
                     doc.data().subtitle, 
@@ -326,9 +326,9 @@ app.get('/getinterships',async(req,res)=>{
                     doc.data().img,
                     doc.data().students
                 );
-                intershipsArray.push(intership);
+                internshipsArray.push(internship);
             });
-            res.send(intershipsArray);
+            res.send(internshipsArray);
         }
     }catch(err){
         res.send(err)
@@ -567,10 +567,10 @@ app.get('/getuser/:id',async(req,res)=>{
       res.send(err)
   }
 })
-app.get('/getintership/:id',async(req,res)=>{
+app.get('/getinternship/:id',async(req,res)=>{
   try{
-      const intershipById =  db.collection("interships").doc(req.params.id);
-      const data = await intershipById.get();
+      const internshipById =  db.collection("internships").doc(req.params.id);
+      const data = await internshipById.get();
       if(!data.exists) {
           res.status(404).send('No course record found');
       }else {
@@ -655,11 +655,11 @@ app.put('/updatecourse/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.put('/updateintership/:id',async(req,res)=>{
+app.put('/updateinternship/:id',async(req,res)=>{
     try{
         const data = req.body; 
-        const intership =  db.collection("interships").doc(req.params.id);
-        await intership.update(data);
+        const internship =  db.collection("internships").doc(req.params.id);
+        await internship.update(data);
         res.send('course record updated successfuly');
     }catch(err){
         res.send(err)
@@ -780,17 +780,17 @@ app.delete('/deletecourse/:id',async(req,res)=>{
         res.send(err)
     }
 })
-app.delete('/deleteintership/:id',async(req,res)=>{
+app.delete('/deleteinternship/:id',async(req,res)=>{
     try{
-        await db.collection("interships").doc(req.params.id).delete();
-        const myCollection = db.collection("subscribeintership");
+        await db.collection("internships").doc(req.params.id).delete();
+        const myCollection = db.collection("subscribeinternship");
         // Query all documents in the collection
         myCollection.get().then((querySnapshot) => {
           // Iterate over each document in the collection
           querySnapshot.forEach((doc) => {
-            const myArray = doc.data().subscribedInterships;            
+            const myArray = doc.data().subscribedInternships;            
             const removedElements = myArray.filter((element) => !element.includes(req.params.id));
-            myCollection.doc(doc.id).update({subscribedInterships: removedElements });
+            myCollection.doc(doc.id).update({subscribedInternships: removedElements });
           });
         });
         res.send('internship record deleted successfuly');
@@ -982,7 +982,7 @@ app.get('/getsubscribedcourses/:userId',async (req, res) => {
     res.status(200).send(subscribecourse);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error fetching subscribed users for intership');
+    res.status(500).send('Error fetching subscribed users for internship');
   }
 });  
 app.post('/subscribedevent/:userId',async (req, res) => {
@@ -1066,41 +1066,41 @@ app.get('/getsubscribedevents/:userId',async (req, res) => {
     res.status(500).send('Error fetching subscribed users for event');
   }
 });
-app.post('/subscribedintership/:userId',async (req, res) => {
+app.post('/subscribedinternsnhip/:userId',async (req, res) => {
   const type = req.body.type; 
   const resume = req.body.resume; 
   const name = req.body.name;
   const contact = req.body.contact;
-  const intershipId = req.body.intershipId; 
-  const internships =[intershipId+" "+type]
+  const internshipId = req.body.internshipId; 
+  const internships =[internshipId+" "+type]
   const { userId } = req.params;
 
   try {
     // Check if user exists in Firestore
-    const userRef = admin.firestore().collection('subscribeintership').doc(userId);
+    const userRef = admin.firestore().collection('subscribeinternship').doc(userId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
       // Create new user document if it does not exist
-      await userRef.set({ subscribedInterships: [],name:"",contact:"",resume:"" });
+      await userRef.set({ subscribedInternships: [],name:"",contact:"",resume:"" });
     }
 
-    const subscribedInterships = userDoc.exists ? userDoc.data().subscribedInterships : [];
-    await db.collection('subscribeintership').doc(userId).set({name:name,resume:resume,contact:contact}) 
-    internships.forEach(intership => {
-      if (!subscribedInterships.includes(intership)) {
-        subscribedInterships.push(intership);
+    const subscribedInternships = userDoc.exists ? userDoc.data().subscribedInternships : [];
+    await db.collection('subscribeinternship').doc(userId).set({name:name,resume:resume,contact:contact}) 
+    internships.forEach(internship => {
+      if (!subscribedInternships.includes(internship)) {
+        subscribedInternships.push(internship);
       }
     });
 
-    await userRef.update({ subscribedInterships });
-    await db.collection('interships').doc(intershipId).update({
+    await userRef.update({ subscribedInternships });
+    await db.collection('internships').doc(internshipId).update({
       students: admin.firestore.FieldValue.arrayUnion(userId)
     })
-    res.status(200).json({ message: 'Subscribed Intership updated successfully' });
+    res.status(200).json({ message: 'Subscribed Internship updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'An error occurred while updating subscribed interships' });
+    res.status(500).json({ message: 'An error occurred while updating subscribed internships' });
   }
   });
   app.get('/getsubscribedcourses/:userId',async (req, res) => {
@@ -1110,17 +1110,17 @@ app.post('/subscribedintership/:userId',async (req, res) => {
       res.status(200).send(subscribecourse);
     } catch (error) {
       console.error(error);
-      res.status(500).send('Error fetching subscribed users for intership');
+      res.status(500).send('Error fetching subscribed users for internship');
     }
   });
-  app.get('/getsubscribedintership/:userId',async (req, res) => {
+  app.get('/getsubscribedinternship/:userId',async (req, res) => {
     try {
-      const userDoc = await db.collection('subscribeintership').doc(req.params.userId).get();
-      const subscribeintership = userDoc.data();
-      res.status(200).send(subscribeintership);
+      const userDoc = await db.collection('subscribeinternship').doc(req.params.userId).get();
+      const subscribeinternship = userDoc.data();
+      res.status(200).send(subscribeinternship);
     } catch (error) {
       console.error(error);
-      res.status(500).send('Error fetching subscribed users for intership');
+      res.status(500).send('Error fetching subscribed users for internship');
     }
   });
 app.post('/filecourses', upload.single('file'), async (req, res) => {
@@ -1147,13 +1147,13 @@ app.post('/filecourses', upload.single('file'), async (req, res) => {
       return res.status(500).send('Server error');
     } 
   }); 
-app.post('/fileinteship', upload.single('file'), async (req, res) => {
+app.post('/fileinternship', upload.single('file'), async (req, res) => {
     try {
       const file = req.file;
       if (!file) {
         return res.status(400).send('No file uploaded');
       }
-      const filename = `Intership/${file.originalname}`;
+      const filename = `Internship/${file.originalname}`;
       const fileRef = bucket.file(filename);
       const options = {
         metadata: {
