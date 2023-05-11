@@ -1066,7 +1066,7 @@ app.get('/getsubscribedevents/:userId',async (req, res) => {
     res.status(500).send('Error fetching subscribed users for event');
   }
 });
-app.post('/subscribedinternsnhip/:userId',async (req, res) => {
+app.post('/subscribedinternship/:userId',async (req, res) => {
   const type = req.body.type; 
   const resume = req.body.resume; 
   const name = req.body.name;
