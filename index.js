@@ -47,6 +47,25 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
 // Admin Account system starts here
+app.get('/getadmins',async(req,res)=>{
+  try {
+    const admin = db.collection('admin');
+    const getdata = await admin.get();
+    const adminArray =[];
+    if (!getdata.empty) {
+      getdata.forEach(doc =>{
+        const object = doc.data();
+        object.id = doc.id;
+        adminArray.push(object);
+      })
+      res.status(200).send(adminArray);
+    }else{
+      res.status(400).send("No Admin")
+    }
+  } catch (error) {
+    
+  }
+})
 app.post('/adminsignup',async(req,res)=>{
   try{
       const users =  db.collection("admin");
@@ -1182,26 +1201,26 @@ app.post('/subscribedinternship/:userId',async (req, res) => {
     res.status(500).json({ message: 'An error occurred while updating subscribed internships' });
   }
   });
-  app.get('/getsubscribedcourses/:userId',async (req, res) => {
-    try {
-      const userDoc = await db.collection('subscribecourse').doc(req.params.userId).get();
-      const subscribecourse = userDoc.data();
-      res.status(200).send(subscribecourse);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error fetching subscribed users for internship');
-    }
-  });
-  app.get('/getsubscribedinternship/:userId',async (req, res) => {
-    try {
-      const userDoc = await db.collection('subscribeinternship').doc(req.params.userId).get();
-      const subscribeinternship = userDoc.data();
-      res.status(200).send(subscribeinternship);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error fetching subscribed users for internship');
-    }
-  });
+app.get('/getsubscribedcourses/:userId',async (req, res) => {
+  try {
+    const userDoc = await db.collection('subscribecourse').doc(req.params.userId).get();
+    const subscribecourse = userDoc.data();
+    res.status(200).send(subscribecourse);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching subscribed users for internship');
+  }
+});
+app.get('/getsubscribedinternship/:userId',async (req, res) => {
+  try {
+    const userDoc = await db.collection('subscribeinternship').doc(req.params.userId).get();
+    const subscribeinternship = userDoc.data();
+    res.status(200).send(subscribeinternship);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching subscribed users for internship');
+  }
+});
 app.post('/filecourses', upload.single('file'), async (req, res) => {
     try {
       const file = req.file;
