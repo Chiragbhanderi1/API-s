@@ -38,9 +38,6 @@ function generateEventId(companyName, eventName) {
 const bucket = admin.storage().bucket();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: {
-      fileSize: 100 * 1024 * 1024, // 100 MB file size limit
-    },
   });
 const db =  admin.firestore();
 app.use(express.json())
@@ -1253,23 +1250,38 @@ app.get('/getsubscribedinternship/:userId',async (req, res) => {
 });
 app.post('/filecourses', upload.single('file'), async (req, res) => {
     try {
-      const file = req.file;
-      if (!file) {
-        return res.status(400).send('No file uploaded');
-      }
-      const filename = `Courses/${file.originalname}`;
-      const fileRef = bucket.file(filename);
-      const options = {
+      const file = req.file;  
+      // Upload the file to Firebase Storage
+      const folderName = 'Course';
+      const bucket = admin.storage().bucket();
+      const fileName = `${folderName}/${file.originalname}`;
+      const fileUpload = bucket.file(fileName);
+    
+      const blobStream = fileUpload.createWriteStream({
         metadata: {
-          contentType: file.mimetype,
-        },
-      };
-      await fileRef.save(file.buffer, options);
-      const downloadUrl = await fileRef.getSignedUrl({
-        action: 'read',
-        expires: '03-17-2035', // Replace with your desired expiration date
+          contentType: file.mimetype
+        }
       });
-      return res.send({success:"File uploaded",downloadUrl});
+    
+      blobStream.on('error', (error) => {
+        console.error('Error uploading file:', error);
+        res.status(500).json({ error: 'Failed to upload file.' });
+      });
+    
+      blobStream.on('finish', () => {
+        // Generate download URL for the file
+        fileUpload.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust the expiration date as needed
+        }).then((signedUrls) => {
+          const downloadUrl = signedUrls[0];
+          res.status(200).json({ downloadUrl });
+        }).catch((error) => {
+          res.status(500).json({error});
+        });
+      });
+    
+      blobStream.end(file.buffer);
     } catch (err) {
       console.error(err);
       return res.status(500).send('Server error');
@@ -1277,23 +1289,38 @@ app.post('/filecourses', upload.single('file'), async (req, res) => {
   }); 
 app.post('/fileinternship', upload.single('file'), async (req, res) => {
     try {
-      const file = req.file;
-      if (!file) {
-        return res.status(400).send('No file uploaded');
-      }
-      const filename = `Internship/${file.originalname}`;
-      const fileRef = bucket.file(filename);
-      const options = {
+      const file = req.file;  
+      // Upload the file to Firebase Storage
+      const folderName = 'Internship';
+      const bucket = admin.storage().bucket();
+      const fileName = `${folderName}/${file.originalname}`;
+      const fileUpload = bucket.file(fileName);
+    
+      const blobStream = fileUpload.createWriteStream({
         metadata: {
-          contentType: file.mimetype,
-        },
-      };
-      await fileRef.save(file.buffer, options);
-      const downloadUrl = await fileRef.getSignedUrl({
-        action: 'read',
-        expires: '03-17-2035', // Replace with your desired expiration date
+          contentType: file.mimetype
+        }
       });
-      return res.send({success:"File uploaded",downloadUrl});
+    
+      blobStream.on('error', (error) => {
+        console.error('Error uploading file:', error);
+        res.status(500).json({ error: 'Failed to upload file.' });
+      });
+    
+      blobStream.on('finish', () => {
+        // Generate download URL for the file
+        fileUpload.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust the expiration date as needed
+        }).then((signedUrls) => {
+          const downloadUrl = signedUrls[0];
+          res.status(200).json({ downloadUrl });
+        }).catch((error) => {
+          res.status(500).json({error});
+        });
+      });
+    
+      blobStream.end(file.buffer);
     } catch (err) {
       console.error(err);
       return res.status(500).send('Server error');
@@ -1301,43 +1328,43 @@ app.post('/fileinternship', upload.single('file'), async (req, res) => {
   }); 
 app.post('/fileevent', upload.single('file'), async (req, res) => {
     try {
-      const file = req.file;
-      if (!file) {
-        return res.status(400).send('No file uploaded');
+      const file = req.file;  
+    // Upload the file to Firebase Storage
+    const folderName = 'Event';
+    const bucket = admin.storage().bucket();
+    const fileName = `${folderName}/${file.originalname}`;
+    const fileUpload = bucket.file(fileName);
+  
+    const blobStream = fileUpload.createWriteStream({
+      metadata: {
+        contentType: file.mimetype
       }
-      const filename = `Event/${file.originalname}`;
-      const fileRef = bucket.file(filename);
-      const options = {
-        metadata: {
-          contentType: file.mimetype,
-        },
-      };
-      await fileRef.save(file.buffer, options);
-      const downloadUrl = await fileRef.getSignedUrl({
+    });
+  
+    blobStream.on('error', (error) => {
+      console.error('Error uploading file:', error);
+      res.status(500).json({ error: 'Failed to upload file.' });
+    });
+  
+    blobStream.on('finish', () => {
+      // Generate download URL for the file
+      fileUpload.getSignedUrl({
         action: 'read',
-        expires: '03-17-2035', // Replace with your desired expiration date
+        expires: '03-01-2500' // Adjust the expiration date as needed
+      }).then((signedUrls) => {
+        const downloadUrl = signedUrls[0];
+        res.status(200).json({ downloadUrl });
+      }).catch((error) => {
+        res.status(500).json({error});
       });
-      return res.send({success:"File uploaded",downloadUrl});
+    });
+  
+    blobStream.end(file.buffer);
     } catch (err) {
       console.error(err);
       return res.status(500).send('Server error');
     } 
   }); 
-// app.get('/file/:filename', (req, res) => { 
-//     const filename = req.params.filename;
-//     const file = bucket.file(filename);
-  
-//     try {
-//       const stream = file.createReadStream();
-//       stream.on('error', err => {
-//         console.log(err)
-//         res.status(404).send('File not found');
-//       });
-//       stream.pipe(res);
-//     } catch (err) {
-//       res.status(500).send('Server error');
-//     }
-//   });
 const PORT = process.env.PORT || 8000;
 app.listen(PORT , ()=>{
     console.log(`Server is running on port ${PORT}`) 
