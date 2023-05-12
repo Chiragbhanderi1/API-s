@@ -78,7 +78,7 @@ app.post('/adminsignup',async(req,res)=>{
           }
         });
       }
-    const data = {name:req.body.name,username:req.body.username,password:CryptoJS.AES.encrypt(req.body.password,"techoithubAdmin").toString()};
+    const data = {name:req.body.name,username:req.body.username,password:CryptoJS.AES.encrypt(req.body.password,"techoithubAdmin").toString(),contact:req.body.contact};
     const response = await db.collection("admin").doc(req.body.username).set(data)
     if (response) {
       res.status(200).send(response)
@@ -312,6 +312,36 @@ app.post('/users',async(req,res)=>{
     }catch(err){
         res.send(err)
     }
+})
+app.post('/newsletter',async(req,res)=>{
+    try{
+          const email = req.body.email;          
+          const response = await db.collection("newsletter").doc(email).set({email,created_on:new Date()})
+          if (response) {
+            res.status(200).send(response)
+          }else{
+            res.status(400).send("Internal Error")
+          }
+    }catch(err){
+        res.send(err)
+    }
+})
+app.get('/getnewsletters',async(req,res)=>{
+  try{
+    const blogs =  db.collection("newsletter");
+    const data = await blogs.get();
+    const blogArray = [];
+    if(data.empty) {
+        res.status(404).send('No email found');
+    }else {
+        data.forEach(doc => {
+            blogArray.push(doc.data().email);
+        });
+        res.send(blogArray);
+    }
+}catch(err){
+    res.send(err)
+}
 })
 app.get('/getcourses',async(req,res)=>{
   const coursesRef = db.collection('courses');
