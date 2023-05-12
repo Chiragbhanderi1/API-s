@@ -39,7 +39,7 @@ const bucket = admin.storage().bucket();
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5 MB file size limit
+      fileSize: 100 * 1024 * 1024, // 100 MB file size limit
     },
   });
 const db =  admin.firestore();
