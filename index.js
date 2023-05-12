@@ -36,9 +36,16 @@ function generateEventId(companyName, eventName) {
   return `${companyId}${eventId}${randomNumbers}`;
 }
 const bucket = admin.storage().bucket();
-const upload = multer({
-    storage: multer.memoryStorage(),
-  });
+const upload = multer({ 
+  storage: multer.memoryStorage().storage,
+  limits: { 
+    fileSize: 100 * 1024 * 1024, // 100MB in bytes
+    fieldSize: 100 * 1024 * 1024, // 100MB in bytes
+    parts: 100, // Increase this if your upload involves multiple parts
+    files: 1 // Increase this if you're uploading multiple files simultaneously
+  }
+});
+
 const db =  admin.firestore();
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
