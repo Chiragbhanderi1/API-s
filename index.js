@@ -11,7 +11,7 @@ const Contact =require("./modals/contactus");
 const Achievements = require("./modals/achievements")
 const admin = require('firebase-admin');
 const credentials = require("./key.json");
-const multer = require('multer')
+const multer = require('multer');
 const twilio = require('twilio');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
@@ -1028,11 +1028,12 @@ app.get('/getsubmittedassignment/:userId',async (req, res) => {
 });
 app.get('/getsubmittedassignment',async (req, res) => {
   try { 
-    const { userId, course,name } = req.query;
+    const { userId,course,name } = req.query;
     const assignment =  db.collection("submittedassignment").orderBy('submitted_on','desc');
       const data = await assignment.get();
       const document = [] 
-      data.forEach((data)=>{ 
+      data.forEach((data)=>{  
+        console.log(name,data.data())
         if(data.data().user===userId && data.data().course===course && data.data().name===name){
               document.push(data.data())
             }
@@ -1062,6 +1063,69 @@ app.get('/getsubmittedassignments',async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+// To send the request for the offline payment
+app.post('/offlinepayment/:email',async (req,res)=>{
+  try{
+    const email = req.params.email;
+    const courseId = req.body.courseId;
+    const type  = req.body.type;
+    const courseimage = req.body.courseimage;
+    const data = { email:email,courseId:courseId,type:type,courseimage:courseimage,approved:false,created_on:new Date()};
+    try {
+      const response = await db.collection("requests").doc().set(data)
+      res.send(response)
+    } catch (error) {
+      res.status(404).send("Check the Field Names Properly");
+    }
+  }catch(err){
+    res.send(err)
+  }
+});
+app.get('/getrequests',async (req,res)=>{
+  try{
+    const blog =  db.collection("requests");
+    const data = await blog.get();
+    const blogArray = [];
+    if(data.empty) {
+        res.status(404).send('No email found');
+    }else {
+        data.forEach(doc => {
+            const response = doc.data();
+            response.id = doc.id;
+            blogArray.push(response);
+        });
+        res.send(blogArray);
+    }
+  }catch(err){
+      res.send(err)
+  }
+});
+app.get('/getrequest/:id',async (req,res)=>{
+  try{
+    const blog =  db.collection("requests").doc(req.params.id);
+    const data = await blog.get();
+    if(!data.exists) {
+      res.status(404).send('No course record found');
+    }else {
+      const response = data.data();
+      response.id = data.id;
+      res.send(response);
+    }
+  }catch(err){
+      res.send(err)
+  }
+});
+app.put('/updaterequest/:id',async(req,res)=>{
+  try{
+      const data = req.body; 
+      const request =  db.collection("requests").doc(req.params.id);
+      await request.update(data);
+      res.send('Request record updated successfuly');
+  }catch(err){
+      res.send(err)
+  }
+})
 app.put('/subscribedcourse/:userId',async (req, res) => {
   // const userId = req.params.userId;     
   const type = req.body.type; 
