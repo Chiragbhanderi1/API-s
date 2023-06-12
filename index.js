@@ -1071,7 +1071,7 @@ app.post('/offlinepayment/:email',async (req,res)=>{
     const courseId = req.body.courseId;
     const type  = req.body.type;
     const courseimage = req.body.courseimage;
-    const data = { email:email,courseId:courseId,type:type,courseimage:courseimage,approved:false,created_on:new Date()};
+    const data = { email:email,courseId:courseId,type:type,courseimage:courseimage,approved:"Pending",created_on:new Date()};
     try {
       const response = await db.collection("requests").doc().set(data)
       res.send(response)
