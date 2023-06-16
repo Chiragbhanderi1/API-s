@@ -170,6 +170,7 @@ app.post('/courses',async(req,res)=>{
       const  videos =req.body.videos;
       const  assignments =req.body.assignments;
       const  materials =req.body.materials;
+      const  faqs =req.body.faqs;
       // Add documents to the videos subcollection
       const videosRef = courseRef.collection("videos");
       for(let i = 0; i < videos.length; i++){
@@ -184,6 +185,11 @@ app.post('/courses',async(req,res)=>{
       const materialsRef = courseRef.collection("materials");
       for(let i = 0; i < materials.length; i++){
         const materialRef = await materialsRef.add(materials[i]);
+      }
+      // Add documents to the faqs subcollection
+      const faq = courseRef.collection("faqs");
+      for(let i = 0; i < faqs.length; i++){
+        const faqsref = await faq.add(faqs[i]);
       }
       
       res.send("success") 
@@ -216,10 +222,30 @@ app.post('/internships',async(req,res)=>{
                     created_on:new Date()
                   };
       const response = await db.collection("internships").doc(req.body.title).set(data)
+      const internshipRef = db.collection("internships").doc(req.body.title);
+      const  faqs =req.body.faqs;
+      // Add documents to the faqs subcollection
+      const faqsRef = internshipRef.collection("faqs");
+      for(let i = 0; i < faqs.length; i++){
+        const faqsRefs= await faqsRef.add(faqs[i]);
+      }
         res.send(response)
     }catch(err){
         res.send(err)
     }
+})
+app.post('/addinternshipdata/:collectionId/:subcollectionId',async(req,res)=>{
+  const subcollection = req.params.subcollectionId;
+  const data = req.body;
+  const courseRef = db.collection('internships').doc(req.params.collectionId);
+  const postRef = courseRef.collection(subcollection);
+  postRef.add(data)
+    .then(() => {
+      res.send('Post added successfully');
+    })
+    .catch((error) => {
+      res.send(error);
+    });
 })
 app.post('/events',async(req,res)=>{
     try{
@@ -364,7 +390,7 @@ app.get('/getcourses',async(req,res)=>{
       videosSnapshot.forEach((videoDoc) => {
         courseData.videos.push(videoDoc.data());
       });
-      // Query the "videos" subcollection for this course
+      // Query the "materail" subcollection for this course
       const materailsSnapshot = await courseDoc.ref.collection('materials').get();
       // Add video data to the course data object
       courseData.materials = [];
@@ -377,6 +403,13 @@ app.get('/getcourses',async(req,res)=>{
       courseData.assignments = [];
       assignmentsSnapshot.forEach((assignmentDoc) => {
         courseData.assignments.push(assignmentDoc.data());
+      });
+      // Query the "faqs" subcollection for this course
+      const faqSnapshot = await courseDoc.ref.collection('faqs').get();
+      // Add faqs data to the course data object
+      courseData.faqs = [];
+      faqSnapshot.forEach((faqDoc) => {
+        courseData.faqs.push(faqDoc.data());
       });
       // Add the course data to the response array
       coursesData.push(courseData);
@@ -404,12 +437,18 @@ app.get('/getcoursescategory/:category',async(req,res)=>{
       const courseData = courseDoc.data();
       // Query the "videos" subcollection for this course
       if(courseData.category===category){
-
         const videosSnapshot = await courseDoc.ref.collection('videos').get();
         // Add video data to the course data object
         courseData.videos = [];
         videosSnapshot.forEach((videoDoc) => {
           courseData.videos.push(videoDoc.data());
+        });
+        // Query the "faqs" subcollection for this course
+        const faqSnapshot = await courseDoc.ref.collection('faqs').get();
+        // Add faqs data to the course data object
+        courseData.faqs = [];
+        faqSnapshot.forEach((faqDoc) => {
+          courseData.faqs.push(faqDoc.data());
         });
         // Query the "videos" subcollection for this course
         const materailsSnapshot = await courseDoc.ref.collection('materials').get();
@@ -418,13 +457,13 @@ app.get('/getcoursescategory/:category',async(req,res)=>{
         materailsSnapshot.forEach((matDoc) => {
           courseData.materials.push(matDoc.data());
         });
-      // Query the "assignments" subcollection for this course
-      const assignmentsSnapshot = await courseDoc.ref.collection('assignments').get();
-      // Add assignment data to the course data object
-      courseData.assignments = [];
-      assignmentsSnapshot.forEach((assignmentDoc) => {
-        courseData.assignments.push(assignmentDoc.data());
-      });
+        // Query the "assignments" subcollection for this course
+        const assignmentsSnapshot = await courseDoc.ref.collection('assignments').get();
+        // Add assignment data to the course data object
+        courseData.assignments = [];
+        assignmentsSnapshot.forEach((assignmentDoc) => {
+          courseData.assignments.push(assignmentDoc.data());
+        });
       // Add the course data to the response array
       coursesData.push(courseData);
     }
@@ -440,31 +479,33 @@ app.get('/getcoursescategory/:category',async(req,res)=>{
   }
 })
 app.get('/getinternships',async(req,res)=>{
-    try{
-        const internships =  db.collection("internships").orderBy("created_on",'desc');
-        const data = await internships.get();
-        const internshipsArray = [];
-        if(data.empty) {
-            res.status(404).send('No internship record found');
-        }else {
-            data.forEach(doc => {
-                const internship = new Internships(
-                    doc.id,
-                    doc.data().title,
-                    doc.data().subtitle, 
-                    doc.data().details,
-                    doc.data().perks,
-                    doc.data().price,
-                    doc.data().img,
-                    doc.data().students
-                );
-                internshipsArray.push(internship);
-            });
-            res.send(internshipsArray);
-        }
-    }catch(err){
-        res.send(err)
-    }
+  const internshipsRef = db.collection('internships');
+  try {
+      const internshipsData = [];
+      const internshipsSnapshot = await internshipsRef.get();
+      // Iterate through each internship document
+      const internshipPromises = internshipsSnapshot.docs.map(async (internshipDoc) => {
+      // Get data from the internship document
+      const internshipData = internshipDoc.data();
+      // Query the "faqs" subcollection for this internship
+      const faqSnapshot = await internshipDoc.ref.collection('faqs').get();
+      // Add faqs data to the internship data object
+      internshipData.faqs = [];
+      faqSnapshot.forEach((faqDoc) => {
+        internshipData.faqs.push(faqDoc.data());
+      });
+      // Add the internship data to the response array
+      internshipsData.push(internshipData);
+    });
+
+    await Promise.all(internshipPromises);
+    // Send the internship data in the response
+    res.status(200).send(internshipsData);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error retrieving internships');
+  }
 })
 app.get('/getevents',async(req,res)=>{
     try{
@@ -681,6 +722,14 @@ app.get('/getcourse/:id',async(req,res)=>{
           };
         });
         courseData.materials = materialsData;
+
+        const faqsSnap = await courseDoc.ref.collection('faqs').get();
+        const faqsData = faqsSnap.docs.map(doc => {
+          return {
+          id: doc.id,
+          ...doc.data()
+        };});
+        courseData.faqs = faqsData;
     res.json(courseData);
   } catch (error) {
     res.send(error)
@@ -700,16 +749,25 @@ app.get('/getuser/:id',async(req,res)=>{
   }
 })
 app.get('/getinternship/:id',async(req,res)=>{
-  try{
-      const internshipById =  db.collection("internships").doc(req.params.id);
-      const data = await internshipById.get();
-      if(!data.exists) {
-          res.status(404).send('No course record found');
-      }else {
-          res.send(data.data());
-      }
-  }catch(err){
-      res.send(err)
+  try {
+    const internshipsRef = db.collection('internships');
+    const internshipId = req.params.id;
+    const internshipDoc = await internshipsRef.doc(internshipId).get();
+    if (!internshipDoc.exists) {
+      return res.status(404).json({ error: 'Internship not found' });
+    }
+    const internshipData = internshipDoc.data();
+    // Get sub-collection data and add it to internshipData
+    const faqsSnap = await internshipDoc.ref.collection('faqs').get();
+    const faqsData = faqsSnap.docs.map(doc => {
+      return {
+      id: doc.id,
+      ...doc.data()
+    };});
+    internshipData.faqs = faqsData;
+    res.json(internshipData);   
+  } catch (error) {
+    res.send(error)
   }
 })
 app.get('/getevent/:id',async(req,res)=>{
@@ -878,6 +936,35 @@ app.delete('/deletecoursedata/:collectionId/:subcollectionId/:documentId', async
   const documentId = req.params.documentId;
   try {
     const collectionRef = admin.firestore().collection("courses");
+    const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
+    await subcollectionRef.doc(documentId).delete(); // Delete the specific document in the subcollection
+    res.status(200).send('Document deleted successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error deleting document');
+  }
+});
+app.put('/updateinternshipdata/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+  const collectionId = req.params.collectionId;
+  const subcollectionId = req.params.subcollectionId;
+  const documentId = req.params.documentId;
+  const data = req.body; // Updated data for the document
+  try {
+    const collectionRef = admin.firestore().collection('internships');
+    const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
+    await subcollectionRef.doc(documentId).update(data); // Update the specific document in the subcollection
+    res.status(200).send('Document updated successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error updating document');
+  }
+});
+app.delete('/deleteinternshipdata/:collectionId/:subcollectionId/:documentId', async (req, res) => {
+  const collectionId = req.params.collectionId;
+  const subcollectionId = req.params.subcollectionId;
+  const documentId = req.params.documentId;
+  try {
+    const collectionRef = admin.firestore().collection("internships");
     const subcollectionRef = collectionRef.doc(collectionId).collection(subcollectionId);
     await subcollectionRef.doc(documentId).delete(); // Delete the specific document in the subcollection
     res.status(200).send('Document deleted successfully');
@@ -1063,7 +1150,6 @@ app.get('/getsubmittedassignments',async (req, res) => {
     res.status(500).send(error);
   }
 });
-
 // To send the request for the offline payment
 app.post('/offlinepayment/:email',async (req,res)=>{
   try{
