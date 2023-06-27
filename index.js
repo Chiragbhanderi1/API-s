@@ -575,6 +575,7 @@ app.get('/getbanners',async(req,res)=>{
                     doc.data().title,
                     doc.data().subtitle,
                     doc.data().type,
+                    doc.data().link,
                     doc.data().imgDesk,
                     doc.data().imgMob,
                 );
