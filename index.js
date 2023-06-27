@@ -268,7 +268,7 @@ app.post('/technicalblogs',async(req,res)=>{
 })
 app.post('/banners',async(req,res)=>{
     try{
-      const data = {title:req.body.title,subtitle:req.body.subtitle,type:req.body.type,imgDesk:req.body.imgDesk,imgMob:req.body.imgMob};
+      const data = {title:req.body.title,subtitle:req.body.subtitle,link:req.body.link,type:req.body.type,imgDesk:req.body.imgDesk,imgMob:req.body.imgMob};
       const response = await db.collection("banners").doc().set(data)
         res.send(response)
     }catch(err){
