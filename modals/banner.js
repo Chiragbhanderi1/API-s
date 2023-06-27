@@ -4,7 +4,7 @@ class Banner {
             this.title = title;
             this.subtitle = subtitle;
             this.type = type;
-            this.type = link;
+            this.link = link;
             this.imgDesk = imgDesk;
             this.imgMob = imgMob;
     }
